@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="personnel-page">
+<div class="wrap">
+
+    {% include "_header.html" %}
+
+  <div class="welcome-banner personnel-banner">
+    <div>
+      <h2>{{ greeting }}, {{ user_name }}</h2>
+      <p>Today's date: {{ today }}</p>
+    </div>
+    {% if streak and streak > 1 %}
+    <div class="streak-chip">
+      <span class="streak-num">{{ streak }}</span>
+      <span class="streak-lbl">day streak</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not checked_in_today %}
+  <div class="reminder-banner">
+    <span class="reminder-icon">⏰</span>
+    <p>You haven't checked in today yet — take a minute to log how you're doing.</p>
+  </div>
+  {% endif %}
+
+  {% if milestone %}
+  <div class="milestone-banner">
+    <span class="milestone-emoji">🎉</span>
+    <div>
+      <p class="milestone-title">{{ milestone }}-Day Streak!</p>
+      <p class="milestone-sub">Consistent check-ins are helping you build a healthy habit. Keep it up!</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="grid2">
+
+  <div style="display:flex; flex-direction:column; gap:22px;">
+
+    <div class="card checkin-card fade-in" id="checkin">
+      <h3>Today's Check-in</h3>
+      <form method="POST" action="/submit_survey">
+        <label>Sleep hours last night</label>
+        <input type="number" step="0.5" name="sleep_hours" min="0" max="12" placeholder="e.g. 7" required>
+
+        <label>Duty hours today</label>
+        <input type="number" step="0.5" name="duty_hours" min="0" max="24" placeholder="e.g. 8" required>
+
+        <label>Resting heart rate (bpm)</label>
+        <input type="number" name="heart_rate" min="40" max="150" placeholder="e.g. 72" required>
+
+        <label>How are you feeling? (1 = Struggling, 5 = Great)</label>
+        <input type="number" name="mood_score" min="1" max="5" placeholder="e.g. 4" required>
+
+        <button type="submit" class="btn">Submit Check-in</button>
+      </form>
+    </div>
+
+  <div class="card fade-in delay-1" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h3 style="margin-bottom:4px;">Your Data</h3>
+      <p style="margin:0; font-size:13px; color:#666;">Download a copy of all your check-ins.</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="/my/export_csv" class="btn" style="text-decoration:none;">Download CSV</a>
+      <a href="/my/export_pdf" class="btn" style="text-decoration:none;">Download PDF</a>
+    </div>
+  </div>
+
+  </div>
+
+  <div class="card snapshot-card fade-in delay-1">
+    <h3>Your Latest Snapshot</h3>
+
+    {% if trend_labels and trend_labels|length > 1 %}
+    <div style="margin-bottom:16px;">
+      <canvas id="personalTrendChart" style="max-height:150px;"></canvas>
+    </div>
+    {% endif %}
+
+    {% if latest %}
+      <span class="result-badge badge-{{ latest.stress_level|lower }}">{{ latest.stress_level }}</span>
+      <p class="snapshot-date">{{ latest.date }}</p>
+      <p class="snapshot-reco">{{ latest.recommendation }}</p>
+    {% else %}
+      <div class="empty-note" style="padding:10px 0;">No check-ins yet. Submit today's first!</div>
+    {% endif %}
+
+        {% if tips %}
+    <div class="tips-box">
+      <p class="tips-title">Quick tips for today</p>
+      <ul class="tips-list">
+        {% for tip in tips %}
+        <li>{{ tip }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <span class="mini-num">{{ history|length }}</span>
+        <span class="mini-lbl">Total check-ins</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-num">{{ streak or 0 }}</span>
+        <span class="mini-lbl">Day streak</span>
+      </div>
+    </div>
+
+    <a href="/results" class="view-results-link">View My Results &rarr;</a>
+  </div>
+
+</div>
+
+</div>
+
+{% if trend_labels and trend_labels|length > 1 %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  new Chart(document.getElementById('personalTrendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ trend_labels|tojson }},
+      datasets: [
+        {
+          label: 'Sleep Hrs',
+          data: {{ trend_sleep|tojson }},
+          backgroundColor: '#4c7a5e',
+          borderRadius: 3
+        },
+        {
+          label: 'Duty Hrs',
+          data: {{ trend_duty|tojson }},
+          backgroundColor: '#9c3d3d',
+          borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10.5 } } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+{% endif %}
+
+</body>
+</html>

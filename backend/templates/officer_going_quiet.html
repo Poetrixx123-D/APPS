@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APPS - Going Quiet</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="officer-page">
+<div class="wrap">
+
+  {% include "_header.html" %}
+
+  <h2 class="page-title">Going Quiet</h2>
+  <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12px; color:var(--steel); margin:0 0 18px;">
+    Personnel who haven't checked in recently.
+  </p>
+
+  {% if followups %}
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-high);">
+    {% for f in followups %}
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 4px; border-bottom:1px solid var(--line);">
+      <div>
+        <div style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:14px; font-weight:600; color:var(--ink);">{{ f.name }}</div>
+        <div style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:11.5px; color:var(--steel);">{% if f.days is none %}Never checked in{% else %}Last check-in {{ f.days }} days ago{% endif %}</div>
+      </div>
+      <a href="/officer/personnel/{{ f.id }}" class="btn" style="text-decoration:none;">Check in</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="empty-note">Everyone has checked in recently.</p>
+  {% endif %}
+
+</div>
+</body>
+</html>

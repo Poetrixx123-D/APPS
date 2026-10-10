@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Admin Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+  .clickable-row { cursor: pointer; }
+  .clickable-row:hover { background-color: rgba(0,0,0,0.04); }
+</style>
+</head>
+<body class="admin-page">
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="mark">APPS</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+    <span class="role-pill">{{ admin_name }} (Senior Admin)</span>
+<a href="/admin/export_excel" class="logout-link" style="border:1px solid #ccc; padding:6px 12px; border-radius:6px;">Download Excel Report</a>
+<a href="/logout" class="logout-link">
+  <svg class="logout-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+  <span>Logout</span>
+</a>
+    </div>
+  </header>
+
+<h2 class="page-title">Organization Overview</h2>
+
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <span class="stat-label">Total Personnel</span>
+      <p class="stat-value">{{ total_personnel }}</p>
+    </div>
+    <div class="stat-card high">
+      <span class="stat-label">High Risk</span>
+      <p class="stat-value" style="color:var(--signal-high);">{{ total_high }}</p>
+    </div>
+    <div class="stat-card medium">
+      <span class="stat-label">Medium Risk</span>
+      <p class="stat-value" style="color:var(--signal-med);">{{ total_medium }}</p>
+    </div>
+    <div class="stat-card low">
+      <span class="stat-label">Low Risk</span>
+      <p class="stat-value" style="color:var(--signal-low);">{{ total_low }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+  <h3>Unit-Wise Breakdown</h3>
+  {% if unit_summary %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 200px)); gap:12px; margin-top:14px;">
+    {% for unit, counts in unit_summary.items() %}
+    <div onclick="window.location='{{ url_for('admin_unit_detail', unit_name=unit) }}'"
+    style="cursor:pointer; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; transition: box-shadow 0.15s ease, transform 0.15s ease;"
+    onmouseover="this.style.boxShadow='0 4px 12px rgba(16,27,38,0.1)'; this.style.transform='translateY(-2px)';"
+    onmouseout="this.style.boxShadow='none'; this.style.transform='none';">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:14px;">{{ unit }}</strong>
+        <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:11px; background:var(--paper); padding:3px 8px; border-radius:10px; color:var(--steel);">{{ counts.total }} personnel</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; text-align:center; font-family:'Helvetica Neue', Arial, sans-serif;">
+        <div>
+          <div style="color:var(--signal-high); font-weight:700; font-size:16px;">{{ counts.High }}</div>
+          <div style="font-size:10px; color:var(--steel);">HIGH</div>
+        </div>
+        <div>
+          <div style="color:var(--signal-med); font-weight:700; font-size:16px;">{{ counts.Medium }}</div>
+          <div style="font-size:10px; color:var(--steel);">MEDIUM</div>
+        </div>
+        <div>
+          <div style="color:var(--signal-low); font-weight:700; font-size:16px;">{{ counts.Low }}</div>
+          <div style="font-size:10px; color:var(--steel);">LOW</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="empty-note">No personnel data yet.</p>
+  {% endif %}
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="personnel-page">
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="mark">APPS</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span class="role-pill">{{ user_name }}</span>
+    <a href="/logout" class="logout-link">
+  <svg class="logout-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+  <span>Logout</span>
+</a>
+    </div>
+  </header>
+
+  <div class="welcome-banner personnel-banner">
+    <div>
+      <h2>{{ greeting }}, {{ user_name }}</h2>
+      <p>Today's date: {{ today }}</p>
+    </div>
+    {% if streak and streak > 1 %}
+    <div class="streak-chip">
+      <span class="streak-num">{{ streak }}</span>
+      <span class="streak-lbl">day streak</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not checked_in_today %}
+  <div class="reminder-banner">
+    <span class="reminder-icon">⏰</span>
+    <p>You haven't checked in today yet — take a minute to log how you're doing.</p>
+  </div>
+  {% endif %}
+
+  {% if milestone %}
+  <div class="milestone-banner">
+    <span class="milestone-emoji">🎉</span>
+    <div>
+      <p class="milestone-title">{{ milestone }}-Day Streak!</p>
+      <p class="milestone-sub">Consistent check-ins are helping you build a healthy habit. Keep it up!</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="grid2">
+
+  <div style="display:flex; flex-direction:column; gap:22px;">
+
+    <div class="card checkin-card fade-in">
+      <h3>Today's Check-in</h3>
+      <form method="POST" action="/submit_survey">
+        <label>Sleep hours last night</label>
+        <input type="number" step="0.5" name="sleep_hours" min="0" max="12" placeholder="e.g. 7" required>
+
+        <label>Duty hours today</label>
+        <input type="number" step="0.5" name="duty_hours" min="0" max="24" placeholder="e.g. 8" required>
+
+        <label>Resting heart rate (bpm)</label>
+        <input type="number" name="heart_rate" min="40" max="150" placeholder="e.g. 72" required>
+
+        <label>How are you feeling? (1 = Struggling, 5 = Great)</label>
+        <input type="number" name="mood_score" min="1" max="5" placeholder="e.g. 4" required>
+
+        <button type="submit" class="btn">Submit Check-in</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Talk to Welfare Officer</h3>
+
+      {% if pending_request %}
+        <div class="empty-note" style="padding:12px 0;">
+          Your request is with the welfare officer. You'll see their response here once reviewed.
+        </div>
+        <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; color:var(--steel); margin-top:8px;">
+          Status: <strong>{{ pending_request.stage or "New" }}</strong> &middot; Submitted on {{ pending_request.created_date }}
+        </p>
+      {% elif resolved_request %}
+        <div style="background:rgba(76,122,94,0.1); border-left:3px solid var(--signal-low); padding:12px 16px; border-radius:6px; margin-bottom:14px;">
+          <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; font-weight:600; color:var(--steel-deep); margin:0 0 4px;">Officer's Response</p>
+          <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); margin:0;">{{ resolved_request.remedy }}</p>
+        </div>
+        <form method="POST" action="/submit_stress_request">
+          <label>Have something new on your mind?</label>
+          <textarea name="message" required style="width:100%; min-height:70px; padding:10px; border:1px solid var(--line); border-radius:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; margin-bottom:16px; resize:vertical;" placeholder="Share what's on your mind..."></textarea>
+          <button type="submit" class="btn">Send to Welfare Officer</button>
+        </form>
+      {% else %}
+        <form method="POST" action="/submit_stress_request">
+          <label>Share what's stressing you — your welfare officer will follow up.</label>
+          <textarea name="message" required style="width:100%; min-height:70px; padding:10px; border:1px solid var(--line); border-radius:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; margin-bottom:16px; resize:vertical;" placeholder="e.g. Feeling overwhelmed with back-to-back night shifts..."></textarea>
+          <button type="submit" class="btn">Send to Welfare Officer</button>
+        </form>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <div class="card snapshot-card fade-in delay-1">
+    <h3>Your Latest Snapshot</h3>
+
+    {% if trend_labels and trend_labels|length > 1 %}
+    <div style="margin-bottom:16px;">
+      <canvas id="personalTrendChart" style="max-height:150px;"></canvas>
+    </div>
+    {% endif %}
+
+    {% if latest %}
+      <span class="result-badge badge-{{ latest.stress_level|lower }}">{{ latest.stress_level }}</span>
+      <p class="snapshot-date">{{ latest.date }}</p>
+      <p class="snapshot-reco">{{ latest.recommendation }}</p>
+    {% else %}
+      <div class="empty-note" style="padding:10px 0;">No check-ins yet. Submit today's first!</div>
+    {% endif %}
+
+        {% if tips %}
+    <div class="tips-box">
+      <p class="tips-title">Quick tips for today</p>
+      <ul class="tips-list">
+        {% for tip in tips %}
+        <li>{{ tip }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <span class="mini-num">{{ history|length }}</span>
+        <span class="mini-lbl">Total check-ins</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-num">{{ streak or 0 }}</span>
+        <span class="mini-lbl">Day streak</span>
+      </div>
+    </div>
+
+    <a href="/results" class="view-results-link">View My Results &rarr;</a>
+  </div>
+
+</div>
+
+  {% if compare %}
+  <div class="card compare-card fade-in delay-1">
+    <h3>You vs Your Unit <span class="compare-window">last 7 days</span></h3>
+
+    {% if compare.status == 'ok' %}
+      <p class="compare-summary">{{ compare.summary }}</p>
+
+      <div class="compare-legend">
+        <span><i class="dot dot-you"></i> You</span>
+        <span><i class="dot dot-unit"></i> Unit {{ compare.unit }} average</span>
+      </div>
+
+      {% for m in compare.metrics %}
+      <div class="compare-row">
+        <div class="compare-head">
+          <span class="compare-label">{{ m.label }}</span>
+          <span class="compare-chip chip-{{ m.verdict }}">
+            {% if m.verdict == 'same' %}About the same
+            {% else %}{{ '▲' if m.diff > 0 else '▼' }} {{ m.diff|abs }} {{ m.suffix }} {{ 'above' if m.diff > 0 else 'below' }} unit{% endif %}
+          </span>
+        </div>
+        <div class="compare-bar"><div class="bar-fill bar-you" style="width:{{ m.you_pct }}%"></div></div>
+        <div class="compare-bar"><div class="bar-fill bar-unit" style="width:{{ m.unit_pct }}%"></div></div>
+        <div class="compare-vals">
+          <span>You: <strong>{{ m.you }}</strong> {{ m.suffix }}</span>
+          <span>Unit: <strong>{{ m.unit }}</strong> {{ m.suffix }}</span>
+        </div>
+      </div>
+      {% endfor %}
+
+      <p class="compare-privacy">Based on {{ compare.members }} personnel in your unit. Only group averages are shown, never an individual's data.</p>
+
+    {% elif compare.status == 'no_checkins' %}
+      <div class="empty-note" style="padding:10px 0;">No check-ins from you in the last 7 days. Submit today's check-in to see how you compare.</div>
+    {% elif compare.status == 'not_enough' %}
+      <div class="empty-note" style="padding:10px 0;">Your unit needs at least {{ compare.min_members }} personnel checking in this week before a fair average can be shown. This protects everyone's privacy.</div>
+    {% else %}
+      <div class="empty-note" style="padding:10px 0;">No unit is assigned to your profile, so there is nothing to compare with yet.</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% if trend_labels and trend_labels|length > 1 %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  new Chart(document.getElementById('personalTrendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ trend_labels|tojson }},
+      datasets: [
+        {
+          label: 'Sleep Hrs',
+          data: {{ trend_sleep|tojson }},
+          backgroundColor: '#4c7a5e',
+          borderRadius: 3
+        },
+        {
+          label: 'Duty Hrs',
+          data: {{ trend_duty|tojson }},
+          backgroundColor: '#9c3d3d',
+          borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10.5 } } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+{% endif %}
+
+</body>
+</html>

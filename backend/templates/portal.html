@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APPS - Select Your Portal</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="portal-shell">
+
+  <div class="portal-header">
+    <div class="brand-mark">APPS</div>
+    <h1>Personnel Stress &amp; Welfare Monitoring</h1>
+    <p>Select your designated role below to sign in or register for your dedicated portal.</p>
+  </div>
+
+  <div class="portal-grid">
+
+    <!-- Card 1: Personnel -->
+    <div class="portal-card">
+      <div class="badge-role badge-personnel">Service Member</div>
+      <div class="portal-icon">🎖️</div>
+      <h2>Army Personnel</h2>
+      <p>Submit daily wellness check-ins, view stress trends, receive personalized insights, and request confidential officer counseling.</p>
+      <div class="btn-group">
+        <a href="/login" class="btn">Personnel Login</a>
+        <a href="/signup" class="btn-outline">Register as Personnel</a>
+      </div>
+    </div>
+
+    <!-- Card 2: Welfare Officer -->
+    <div class="portal-card">
+      <div class="badge-role badge-officer">Welfare Staff</div>
+      <div class="portal-icon">🛡️</div>
+      <h2>Welfare Officer</h2>
+      <p>Monitor assigned troop readiness, track high-strain alerts, respond to personnel counseling requests, and maintain activity logs.</p>
+      <div class="btn-group">
+        <a href="/officer_login" class="btn">Officer Login</a>
+        <a href="/officer_signup" class="btn-outline">Register with Code</a>
+      </div>
+    </div>
+
+    <!-- Card 3: Senior Administrator -->
+    <div class="portal-card">
+      <div class="badge-role badge-admin">Command &amp; HQ</div>
+      <div class="portal-icon">⚙️</div>
+      <h2>Senior Admin</h2>
+      <p>Oversee aggregate organization readiness, analyze unit-by-unit statistics, export executive reports, and manage access codes.</p>
+      <div class="btn-group">
+        <a href="/admin_login" class="btn">Admin Login</a>
+        <a href="/admin_signup" class="btn-outline">Register with Code</a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

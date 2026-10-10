@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APPS - Unit Breakdown</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-page">
+<div class="wrap">
+
+  {% include "_header.html" %}
+
+  <h2 class="page-title">Unit-Wise Breakdown</h2>
+
+  <div class="card">
+  {% if unit_summary %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 200px)); gap:12px; margin-top:4px;">
+    {% for unit, counts in unit_summary.items() %}
+    <div onclick="window.location='{{ url_for('admin_unit_detail', unit_name=unit) }}'"
+    style="cursor:pointer; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; transition: box-shadow 0.15s ease, transform 0.15s ease;"
+    onmouseover="this.style.boxShadow='0 4px 12px rgba(16,27,38,0.1)'; this.style.transform='translateY(-2px)';"
+    onmouseout="this.style.boxShadow='none'; this.style.transform='none';">
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:14px;">{{ unit }}</strong>
+        <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:11px; background:var(--paper); padding:3px 8px; border-radius:10px; color:var(--steel);">{{ counts.total }} personnel</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; text-align:center; font-family:'Helvetica Neue', Arial, sans-serif;">
+        <div>
+          <div style="color:var(--signal-high); font-weight:700; font-size:16px;">{{ counts.High }}</div>
+          <div style="font-size:10px; color:var(--steel);">HIGH</div>
+        </div>
+        <div>
+          <div style="color:var(--signal-med); font-weight:700; font-size:16px;">{{ counts.Medium }}</div>
+          <div style="font-size:10px; color:var(--steel);">MEDIUM</div>
+        </div>
+        <div>
+          <div style="color:var(--signal-low); font-weight:700; font-size:16px;">{{ counts.Low }}</div>
+          <div style="font-size:10px; color:var(--steel);">LOW</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p class="empty-note">No personnel data yet.</p>
+  {% endif %}
+  </div>
+
+</div>
+</body>
+</html>

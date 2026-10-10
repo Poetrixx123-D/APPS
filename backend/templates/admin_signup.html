@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APPS - Admin Registration</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+
+  <div class="auth-brand-panel">
+    <div class="brand-mark">APPS</div>
+    <h1>Senior Admin Registration</h1>
+    <p>This registration portal is strictly for authorized Senior Administrators with high-level command access codes.</p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <div class="brand">APPS <span>•</span> ADMIN</div>
+      <h1>Admin Sign Up</h1>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/admin_signup">
+        <label>Name</label>
+        <input type="text" name="name" required autofocus>
+
+        <label>Unit / Department</label>
+        <input type="text" name="unit" placeholder="e.g. HQ Command" required>
+
+        <label>Password</label>
+        <input type="password" name="password" minlength="6" placeholder="Minimum 6 characters" required>
+
+        <label>Admin Access Code</label>
+        <input type="text" name="access_code" placeholder="e.g. ADM-XXXXX" required>
+
+        <button type="submit" class="btn">Register as Admin</button>
+      </form>
+
+      <p class="foot-link">Already registered as an Admin? <a href="/admin_login">Admin Login</a></p>
+      <p class="foot-link" style="margin-top:14px;"><a href="/portal" style="color:var(--steel); text-decoration:none;">← Back to Portal Selection</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Officer Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="officer-page">
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="mark">APPS</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span class="role-pill">{{ user_name }} (Officer)</span>
+      <a href="/officer/export_excel" class="logout-link" style="border:1px solid #ccc; padding:6px 12px; border-radius:6px;">Download Excel Report</a>
+    <a href="/logout" class="logout-link">
+  <svg class="logout-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+  <span>Logout</span>
+</a>
+    </div>
+  </header>
+
+    <a href="/officer/requests" style="display:inline-flex; align-items:center; gap:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; font-weight:600; color:var(--steel-deep); text-decoration:none; padding:7px 14px; border:1px solid var(--line); border-radius:20px; margin-bottom:16px;">
+    📋 View Pending Requests
+  </a>
+
+  <h2 class="page-title">Unit Roster</h2>
+  <p class="empty-note" style="margin-bottom:22px;">Today's readings across your unit.</p>
+
+  <div class="stat-panel" style="margin-bottom:22px;">
+    <div class="card stat-hero" style="cursor:pointer;" onclick="quickFilter('')">
+      <h3 style="border:none; margin:0;">Total Personnel</h3>
+      <p class="stat-value-hero">{{ total }}</p>
+      <p class="stat-sub">reporting today</p>
+    </div>
+    <div class="card stat-breakdown">
+      <h3>Risk Breakdown</h3>
+      <div class="breakdown-row" style="cursor:pointer;" onclick="quickFilter('High')">
+        <span class="breakdown-dot" style="background:var(--signal-high);"></span>
+        <span class="breakdown-label">High</span>
+        <span class="breakdown-bar"><span class="breakdown-fill" style="width:{{ (high_count / total * 100) if total else 0 }}%; background:var(--signal-high);"></span></span>
+        <span class="breakdown-count">{{ high_count }}</span>
+      </div>
+      <div class="breakdown-row" style="cursor:pointer;" onclick="quickFilter('Medium')">
+        <span class="breakdown-dot" style="background:var(--signal-med);"></span>
+        <span class="breakdown-label">Medium</span>
+        <span class="breakdown-bar"><span class="breakdown-fill" style="width:{{ (medium_count / total * 100) if total else 0 }}%; background:var(--signal-med);"></span></span>
+        <span class="breakdown-count">{{ medium_count }}</span>
+      </div>
+      <div class="breakdown-row" style="cursor:pointer;" onclick="quickFilter('Low')">
+        <span class="breakdown-dot" style="background:var(--signal-low);"></span>
+        <span class="breakdown-label">Low</span>
+        <span class="breakdown-bar"><span class="breakdown-fill" style="width:{{ (low_count / total * 100) if total else 0 }}%; background:var(--signal-low);"></span></span>
+        <span class="breakdown-count">{{ low_count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:22px;">
+    <h3>Risk Distribution</h3>
+    <canvas id="riskChart" style="max-height:260px;"></canvas>
+  </div>
+
+  {% if high_count == 0 and total > 0 %}
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-low); display:flex; align-items:center; gap:10px;">
+    <span style="font-size:16px;">✓</span>
+    <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
+      No personnel currently flagged as High Risk.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if high_count > 0 %}
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-high); display:flex; align-items:center; gap:10px;">
+    <span style="font-size:16px;">⚠</span>
+    <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
+      {{ high_count }} personnel flagged as High Risk — review below.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="border:none; margin:0;">Personnel List</h3>
+      <div style="display:flex; gap:8px;">
+        <input id="searchBox" type="text" placeholder="Search name/unit..." onkeyup="filterTable()">
+        <select id="riskFilter" onchange="filterTable()">
+          <option value="">All Risk</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+    </div>
+
+    {% if personnel %}
+    <div style="display:flex; flex-direction:column;">
+      {% for p in personnel %}
+      <a href="/officer/personnel/{{ p.id }}" class="personnel-row" style="text-decoration:none; color:inherit;">
+        <div style="display:flex; align-items:center; gap:14px; padding:14px 6px; border-bottom:1px solid var(--line); border-radius:6px; transition: background 0.15s ease;"
+             onmouseover="this.style.background='rgba(60,82,102,0.05)';"
+             onmouseout="this.style.background='transparent';">
+
+          <div style="flex-shrink:0; width:38px; height:38px; border-radius:50%; background:var(--steel-deep); color:#fdfdf9; display:flex; align-items:center; justify-content:center; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:700; font-size:14px;">
+            {{ p.name[0]|upper }}
+          </div>
+
+          <div style="flex:1; min-width:140px;">
+            <div style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:14px; font-weight:600; color:var(--ink);">{{ p.name }}</div>
+            <div style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:11.5px; color:var(--steel);">{{ p.unit }} &middot; {{ p.date }}</div>
+          </div>
+
+          <div style="display:flex; gap:22px; font-family:'Helvetica Neue', Arial, sans-serif; text-align:center;">
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--ink);">{{ p.sleep_hours }}h</div>
+              <div style="font-size:10px; color:var(--steel);">SLEEP</div>
+            </div>
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--ink);">{{ p.duty_hours }}h</div>
+              <div style="font-size:10px; color:var(--steel);">DUTY</div>
+            </div>
+          </div>
+
+          <span class="risk-tag badge-{{ p.stress_level|lower }}" style="flex-shrink:0; min-width:60px; text-align:center;">{{ p.stress_level }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <p id="noResults" class="empty-note" style="display:none;">No personnel match your search.</p>
+    {% else %}
+      <p class="empty-note">No personnel data yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script>
+  const ctx = document.getElementById('riskChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Low', 'Medium', 'High'],
+      datasets: [{
+        label: 'Number of Personnel',
+        data: [{{ low_count }}, {{ medium_count }}, {{ high_count }}],
+        backgroundColor: ['#4c7a5e', '#b8863c', '#9c3d3d']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+
+  function filterTable() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    const risk = document.getElementById('riskFilter').value;
+    let visibleCount = 0;
+    document.querySelectorAll('.personnel-row').forEach(row => {
+      const text = row.innerText.toLowerCase();
+      const rowRisk = row.querySelector('.risk-tag')?.innerText.trim();
+      const match = text.includes(q) && (!risk || rowRisk === risk);
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+    const noResults = document.getElementById('noResults');
+    if (noResults) noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+
+  function quickFilter(level){
+    document.getElementById('riskFilter').value = level;
+    filterTable();
+  }
+</script>
+</body>
+</html>

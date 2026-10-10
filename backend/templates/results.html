@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - My Results</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  {% include "_header.html" %}
+  
+  <div class="welcome-banner">
+    <h2>My Results</h2>
+    <p>Full history of your daily check-ins and stress readings</p>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <a href="/dashboard" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:transparent; color:var(--steel-deep); border:1.5px solid var(--line); border-radius:7px; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:600; font-size:12.5px; letter-spacing:0.02em; text-decoration:none; transition: background 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.background='var(--card)'; this.style.borderColor='var(--steel-deep)';" onmouseout="this.style.background='transparent'; this.style.borderColor='var(--line)';">&larr; Back to Check-in</a>
+  </div>
+
+  <div class="card">
+    <h3>All Your Results</h3>
+    {% if history %}
+      {% for entry in history %}
+        <div class="result-entry">
+          <span class="result-badge badge-{{ entry.stress_level|lower }}">{{ entry.stress_level }}</span>
+          <div class="result-text">
+            <p><b>Date:</b> {{ entry.date }}</p>
+            <p><b>Recommendation:</b> {{ entry.recommendation }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center; padding:40px 20px;">
+        <p class="empty-note" style="font-size:14px; margin-bottom:16px;">You haven't submitted a check-in yet.</p>
+        <a href="/dashboard" class="btn" style="display:inline-block; width:auto; padding:11px 22px; text-decoration:none;">Submit Your First Check-in</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>

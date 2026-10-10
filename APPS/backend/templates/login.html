@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Login</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+
+  <div class="auth-brand-panel">
+    <div class="brand-mark">APPS</div>
+    <h1>Personnel Stress &amp; Welfare Monitoring</h1>
+    <p>Proactive, AI-assisted check-ins that help welfare officers spot strain early and respond with the right support.</p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <h1>Login</h1>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <label>Name</label>
+        <input type="text" name="name" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <button type="submit" class="btn">Login</button>
+      </form>
+
+      <p class="foot-link">No account yet? <a href="/signup">Sign up</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

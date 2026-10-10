@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Admin Registration</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+
+  <div class="auth-brand-panel">
+    <div class="brand-mark">APPS</div>
+    <h1>Senior Admin Registration</h1>
+    <p>This page is for authorized Senior Administrators only. Personnel and Welfare Officers should use their own registration pages.</p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <h1>Admin Sign Up</h1>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/admin_signup">
+        <label>Name</label>
+        <input type="text" name="name" required>
+
+        <label>Unit / Department</label>
+        <input type="text" name="unit" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Admin Access Code</label>
+        <input type="text" name="access_code" placeholder="e.g. ADM-XXXXX" required>
+
+        <button type="submit" class="btn">Register as Admin</button>
+      </form>
+
+      <p class="foot-link">Already have an account? <a href="/login">Login</a></p>
+      <p class="foot-link" style="margin-top:8px;">Are you Personnel or an Officer? <a href="/signup">Register here</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

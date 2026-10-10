@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APPS - {{ role_title or 'Personnel Login' }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+
+  <div class="auth-brand-panel">
+    <div class="brand-mark">APPS</div>
+    <h1>{{ brand_heading or 'Personnel Stress & Welfare Monitoring' }}</h1>
+    <p>{{ brand_sub or 'Proactive, AI-assisted check-ins that help welfare officers spot strain early and respond with the right support.' }}</p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <div class="brand">APPS <span>•</span> {{ role_badge or 'PERSONNEL' }}</div>
+      <h1>{{ role_title or 'Personnel Login' }}</h1>
+
+      <!-- Role Tabs for quick role-specific login navigation -->
+      <div class="role-tabs">
+        <a href="/login" class="role-tab {% if active_role == 'personnel' or not active_role %}active{% endif %}">🎖️ Personnel</a>
+        <a href="/officer_login" class="role-tab {% if active_role == 'officer' %}active{% endif %}">🛡️ Officer</a>
+        <a href="/admin_login" class="role-tab {% if active_role == 'admin' %}active{% endif %}">⚙️ Admin</a>
+      </div>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="{{ action_url or '/login' }}">
+        <label>Name</label>
+        <input type="text" name="name" required autofocus>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <button type="submit" class="btn">{{ submit_label or 'Login as Personnel' }}</button>
+      </form>
+
+      {% if signup_url %}
+        <p class="foot-link">{{ signup_prompt or 'No account yet?' }} <a href="{{ signup_url }}">{{ signup_link_text or 'Sign up' }}</a></p>
+      {% endif %}
+      <p class="foot-link" style="margin-top:14px;"><a href="/portal" style="color:var(--steel); text-decoration:none;">← Back to Portal Selection</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

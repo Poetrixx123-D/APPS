@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Officer Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="officer-page">
+<div class="wrap">
+
+    {% include "_header.html" %}
+
+  <h2 class="page-title">Unit Roster</h2>
+  <p class="empty-note" style="margin-bottom:22px;">Today's readings for your caseload.</p>
+
+  <div class="stat-panel" style="margin-bottom:22px;">
+    <div class="card stat-hero">
+      <h3 style="border:none; margin:0;">Total Personnel</h3>
+      <p class="stat-value-hero">{{ total }}</p>
+      <p class="stat-sub">reporting today</p>
+    </div>
+    <div class="card stat-breakdown">
+      <h3>Risk Breakdown</h3>
+      <div class="breakdown-row">
+        <span class="breakdown-dot" style="background:var(--signal-high);"></span>
+        <span class="breakdown-label">High</span>
+        <span class="breakdown-bar"><span class="breakdown-fill" style="width:{{ (high_count / total * 100) if total else 0 }}%; background:var(--signal-high);"></span></span>
+        <span class="breakdown-count">{{ high_count }}</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-dot" style="background:var(--signal-med);"></span>
+        <span class="breakdown-label">Medium</span>
+        <span class="breakdown-bar"><span class="breakdown-fill" style="width:{{ (medium_count / total * 100) if total else 0 }}%; background:var(--signal-med);"></span></span>
+        <span class="breakdown-count">{{ medium_count }}</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-dot" style="background:var(--signal-low);"></span>
+        <span class="breakdown-label">Low</span>
+        <span class="breakdown-bar"><span class="breakdown-fill" style="width:{{ (low_count / total * 100) if total else 0 }}%; background:var(--signal-low);"></span></span>
+        <span class="breakdown-count">{{ low_count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:22px;">
+    <h3>Risk Distribution</h3>
+    <canvas id="riskChart" style="max-height:260px;"></canvas>
+  </div>
+
+  {% if high_count == 0 and total > 0 %}
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-low); display:flex; align-items:center; gap:10px;">
+    <span style="font-size:16px;">✓</span>
+    <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
+      No personnel currently flagged as High Risk.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if high_count > 0 %}
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-high); display:flex; align-items:center; gap:10px;">
+    <span style="font-size:16px;">⚠</span>
+    <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
+      {{ high_count }} personnel flagged as High Risk — see the <a href="/officer/personnel">Personnel List</a>.
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script>
+  const ctx = document.getElementById('riskChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Low', 'Medium', 'High'],
+      datasets: [{
+        label: 'Number of Personnel',
+        data: [{{ low_count }}, {{ medium_count }}, {{ high_count }}],
+        backgroundColor: ['#4c7a5e', '#b8863c', '#9c3d3d']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+</script>
+</body>
+</html>

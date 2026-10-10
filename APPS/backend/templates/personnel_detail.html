@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Personnel Detail</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="mark">APPS</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span class="role-pill">{{ officer_name }} (Welfare Officer)</span>
+      <a href="/logout" class="logout-link">
+  <svg class="logout-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+    <polyline points="16 17 21 12 16 7"></polyline>
+    <line x1="21" y1="12" x2="9" y2="12"></line>
+  </svg>
+  <span>Logout</span>
+</a>
+    </div>
+  </header>
+
+  <a href="/officer_dashboard" style="display:inline-flex; align-items:center; gap:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; font-weight:600; color:var(--steel-deep); text-decoration:none; padding:7px 14px; border:1px solid var(--line); border-radius:20px; margin-bottom:16px; transition: background 0.15s ease, border-color 0.15s ease;"
+   onmouseover="this.style.background='var(--card)'; this.style.borderColor='var(--steel-deep)';"
+   onmouseout="this.style.background='transparent'; this.style.borderColor='var(--line)';">
+  <span style="font-size:14px;">&larr;</span> Back to Dashboard
+</a>
+
+  <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;">
+    <div style="width:52px; height:52px; border-radius:50%; background:var(--steel-deep); color:#fdfdf9; display:flex; align-items:center; justify-content:center; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:700; font-size:20px;">
+      {{ person.name[0]|upper }}
+    </div>
+    <div>
+      <h2 class="page-title" style="margin:0;">{{ person.name }}</h2>
+      {% if history %}
+        <span class="risk-tag badge-{{ history[0].stress_level|lower }}">{{ history[0].stress_level }} — Latest</span>
+      {% endif %}
+    </div>
+  </div>
+  <p class="empty-note" style="margin-bottom:20px;">Unit: {{ person.unit }}</p>
+
+  {% if history and history[0].stress_level == 'High' %}
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-high); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span style="font-size:16px;">⚠</span>
+      <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
+        Latest check-in flagged High Risk — consider prioritizing counseling.
+      </p>
+    </div>
+    <button type="button" onclick="scrollToNotes()" style="flex-shrink:0; background:var(--signal-high); color:#fff; border:none; padding:9px 16px; border-radius:7px; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:600; font-size:12.5px; letter-spacing:0.02em; cursor:pointer; white-space:nowrap; transition: background 0.2s ease;"
+      onmouseover="this.style.background='#7e3232';" onmouseout="this.style.background='var(--signal-high)';">
+      Schedule Counseling &rarr;
+    </button>
+  </div>
+  {% endif %}
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Check-in History</h3>
+      {% if trend_labels and trend_labels|length > 1 %}
+      <div style="margin-bottom:18px;">
+        <canvas id="trendChart" style="max-height:160px;"></canvas>
+      </div>
+      {% endif %}
+      <div style="max-height:420px; overflow-y:auto; padding-right:4px;">
+        {% if history %}
+  {% if history_today %}
+    <p class="history-group-label">Today</p>
+    {% for entry in history_today %}
+    <div class="result-entry" style="border-left:3px solid var(--signal-{{ 'high' if entry.stress_level=='High' else ('med' if entry.stress_level=='Medium' else 'low') }}); padding-left:10px; flex-direction:column; gap:10px;">
+      <span class="result-badge badge-{{ entry.stress_level|lower }}">{{ entry.stress_level }} RISK</span>
+      <div style="display:grid; grid-template-columns:repeat(3, auto); gap:18px;">
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Date</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.date }}</span>
+        </div>
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Sleep</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.sleep_hours }} hrs</span>
+        </div>
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Duty</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.duty_hours }} hrs</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if history_week %}
+    <p class="history-group-label">This Week</p>
+    {% for entry in history_week %}
+    <div class="result-entry" style="border-left:3px solid var(--signal-{{ 'high' if entry.stress_level=='High' else ('med' if entry.stress_level=='Medium' else 'low') }}); padding-left:10px; flex-direction:column; gap:10px;">
+      <span class="result-badge badge-{{ entry.stress_level|lower }}">{{ entry.stress_level }} RISK</span>
+      <div style="display:grid; grid-template-columns:repeat(3, auto); gap:18px;">
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Date</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.date }}</span>
+        </div>
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Sleep</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.sleep_hours }} hrs</span>
+        </div>
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Duty</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.duty_hours }} hrs</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if history_older %}
+    <p class="history-group-label">Older</p>
+    {% for entry in history_older %}
+    <div class="result-entry" style="border-left:3px solid var(--signal-{{ 'high' if entry.stress_level=='High' else ('med' if entry.stress_level=='Medium' else 'low') }}); padding-left:10px; flex-direction:column; gap:10px;">
+      <span class="result-badge badge-{{ entry.stress_level|lower }}">{{ entry.stress_level }} RISK</span>
+      <div style="display:grid; grid-template-columns:repeat(3, auto); gap:18px;">
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Date</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.date }}</span>
+        </div>
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Sleep</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.sleep_hours }} hrs</span>
+        </div>
+        <div>
+          <span style="display:block; font-family:'Helvetica Neue', Arial, sans-serif; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--steel); margin-bottom:2px;">Duty</span>
+          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); font-weight:600;">{{ entry.duty_hours }} hrs</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+{% else %}
+  <p class="empty-note">No check-ins yet.</p>
+{% endif %}
+      </div>
+    </div>
+
+    <div class="card" id="counselingCard">
+      <h3>Add Counseling Note</h3>
+      {% if request.args.get('saved') %}
+      <div id="savedBanner" style="background:rgba(76,122,94,0.12); border-left:3px solid var(--signal-low); padding:8px 12px; border-radius:4px; margin-bottom:14px; font-size:12.5px;">
+        ✓ Note saved successfully.
+      </div>
+      {% endif %}
+      <form method="POST" action="/add_note">
+  <input type="hidden" name="user_id" value="{{ person.id }}">
+
+  <label>Notes</label>
+  <textarea name="notes" id="notesTextarea" required style="width:100%; min-height:70px; padding:10px; border:1px solid var(--line); border-radius:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; margin-bottom:16px; resize:vertical;"></textarea>
+
+  <label>Action Taken</label>
+  <input type="text" name="action_taken" placeholder="e.g. Recommended 2-day rest" required>
+
+  <button type="submit" class="btn" id="saveNoteBtn">Save Note</button>
+</form>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:22px;">
+    <h3>Previous Notes</h3>
+    {% if notes %}
+      <div class="result-entry" style="display:flex; gap:12px; align-items:flex-start;">
+        <div style="flex-shrink:0; width:30px; height:30px; border-radius:50%; background:var(--steel); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">
+          {{ notes[0].officer_name[0]|upper }}
+        </div>
+        <div>
+          <p style="margin:0 0 4px 0;"><b>{{ notes[0].officer_name }}</b> <span style="color:var(--steel); font-size:11.5px;">— {{ notes[0].date }}</span></p>
+          <p><b>Notes:</b> {{ notes[0].notes }}</p>
+          <p><b>Action Taken:</b> {{ notes[0].action_taken }}</p>
+        </div>
+      </div>
+
+      {% if notes|length > 1 %}
+      <button type="button" id="toggleNotesBtn" onclick="toggleOlderNotes()"
+        data-show-text="Show {{ notes|length - 1 }} more note{{ 's' if notes|length - 1 > 1 else '' }} &darr;"
+        style="margin-top:14px; background:transparent; border:1px solid var(--line); color:var(--steel-deep); padding:8px 14px; border-radius:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:600; font-size:12.5px; cursor:pointer;">
+        Show {{ notes|length - 1 }} more note{{ 's' if notes|length - 1 > 1 else '' }} &darr;
+      </button>
+
+      <div id="olderNotes" style="display:none; margin-top:14px;">
+        {% for note in notes[1:] %}
+          <div class="result-entry" style="display:flex; gap:12px; align-items:flex-start; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">
+            <div style="flex-shrink:0; width:30px; height:30px; border-radius:50%; background:var(--steel); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">
+              {{ note.officer_name[0]|upper }}
+            </div>
+            <div>
+              <p style="margin:0 0 4px 0;"><b>{{ note.officer_name }}</b> <span style="color:var(--steel); font-size:11.5px;">— {{ note.date }}</span></p>
+              <p><b>Notes:</b> {{ note.notes }}</p>
+              <p><b>Action Taken:</b> {{ note.action_taken }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <p class="empty-note">No notes yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<button type="button" id="stickyAddNoteBtn" onclick="scrollToNotes()" title="Add Counseling Note">
+  <span style="font-size:18px; line-height:1;">+</span>
+  <span class="sticky-btn-label">Add Note</span>
+</button>
+
+
+{% if trend_labels and trend_labels|length > 1 %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ trend_labels|tojson }},
+      datasets: [
+        {
+          label: 'Sleep Hrs',
+          data: {{ trend_sleep|tojson }},
+          backgroundColor: '#4c7a5e',
+          borderRadius: 3
+        },
+        {
+          label: 'Duty Hrs',
+          data: {{ trend_duty|tojson }},
+          backgroundColor: '#9c3d3d',
+          borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10.5 } } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+{% endif %}
+
+<script>
+  const savedBanner = document.getElementById('savedBanner');
+  if (savedBanner) {
+    setTimeout(() => {
+      savedBanner.style.transition = 'opacity 0.4s ease';
+      savedBanner.style.opacity = '0';
+      setTimeout(() => savedBanner.remove(), 400);
+    }, 3000);
+
+    // clean the ?saved=1 from URL so refresh/back won't show it again
+    const url = new URL(window.location);
+    url.searchParams.delete('saved');
+    window.history.replaceState({}, '', url);
+  }
+
+  function scrollToNotes() {
+    const card = document.getElementById('counselingCard');
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        document.getElementById('notesTextarea').focus();
+      }, 400);
+    }
+  }
+
+  // ---- Notes form loading state ----
+  const saveBtn = document.getElementById('saveNoteBtn');
+  if (saveBtn) {
+    const noteForm = saveBtn.closest('form');
+    if (noteForm) {
+      noteForm.addEventListener('submit', function() {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        saveBtn.style.opacity = '0.7';
+        saveBtn.style.cursor = 'not-allowed';
+      });
+    }
+  }
+
+  function toggleOlderNotes() {
+  const older = document.getElementById('olderNotes');
+  const btn = document.getElementById('toggleNotesBtn');
+  if (!older || !btn) return;
+  const hidden = older.style.display === 'none';
+  older.style.display = hidden ? 'block' : 'none';
+  btn.innerHTML = hidden ? 'Hide notes &uarr;' : btn.getAttribute('data-show-text');
+}
+
+</script>
+
+</body>
+</html>

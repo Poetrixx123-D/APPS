@@ -1,0 +1,89 @@
+{% set role = session.get('role') %}
+{% set p = request.path %}
+
+<header class="top">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button type="button" id="navToggle" class="nav-toggle" aria-label="Open menu"
+            aria-expanded="false" aria-controls="navDrawer">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="mark">APPS</div>
+  </div>
+  <span class="role-pill">
+    {{ session.get('user_name') }}{% if role == 'officer' %} (Officer){% elif role == 'admin' %} (Senior Admin){% endif %}
+  </span>
+</header>
+
+<div id="navOverlay" class="nav-overlay"></div>
+
+<nav id="navDrawer" class="nav-drawer" aria-hidden="true">
+  <div class="nav-head">
+    <div>
+      <div class="nav-user">{{ session.get('user_name') }}</div>
+      <div class="nav-role">
+        {% if role == 'officer' %}Welfare Officer{% elif role == 'admin' %}Senior Admin{% else %}Personnel{% endif %}
+      </div>
+    </div>
+    <button type="button" id="navClose" class="nav-close" aria-label="Close menu">&times;</button>
+  </div>
+
+  <div class="nav-links">
+  {% if role == 'personnel' %}
+    <a href="/dashboard" class="nav-item {% if p == '/dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="/dashboard#checkin" class="nav-item">Daily Check-in</a>
+    <a href="/talk_to_officer" class="nav-item {% if p == '/talk_to_officer' %}active{% endif %}">Talk to Welfare Officer</a>
+    <a href="/results" class="nav-item {% if p == '/results' %}active{% endif %}">My Results</a>
+    <div class="nav-section">Export My Data</div>
+    <a href="/my/export_csv" class="nav-item sub">Download CSV</a>
+    <a href="/my/export_pdf" class="nav-item sub">Download PDF</a>
+
+  {% elif role == 'officer' %}
+
+
+    <a href="/officer/personnel" class="nav-item {% if p == '/officer/personnel' or p.startswith('/officer/personnel/') %}active{% endif %}">Personnel List</a>
+
+    <a href="/officer/requests" class="nav-item {% if p == '/officer/requests' %}active{% endif %}">
+      <span>Request Pipeline</span>
+      {% if pending_count %}<span class="nav-badge">{{ pending_count }}</span>{% endif %}
+    </a>
+
+    <a href="/officer/going_quiet" class="nav-item {% if p == '/officer/going_quiet' %}active{% endif %}">Going Quiet</a>
+
+    <a href="/officer/activity_log" class="nav-item {% if p == '/officer/activity_log' %}active{% endif %}">Activity Log</a>
+
+    <div class="nav-section">Reports</div>
+    <a href="/officer/export_excel" class="nav-item sub">Download Excel</a>
+    <a href="/officer/export_report" class="nav-item sub">Download PDF</a>
+
+  {% elif role == 'admin' %}
+    <a href="/admin_dashboard" class="nav-item {% if p == '/admin_dashboard' %}active{% endif %}">Organization Overview</a>
+    <a href="/admin/units" class="nav-item {% if p.startswith('/admin/unit') %}active{% endif %}">Unit Breakdown</a>
+    <div class="nav-section">Reports</div>
+    <a href="/admin/export_excel" class="nav-item sub">Download Excel</a>
+    <a href="/admin/export_report" class="nav-item sub">Download PDF</a>
+  {% endif %}
+  </div>
+
+  <a href="/logout" class="nav-item nav-logout">Logout</a>
+</nav>
+
+<script>
+(function () {
+  var btn = document.getElementById('navToggle');
+  var drawer = document.getElementById('navDrawer');
+  var overlay = document.getElementById('navOverlay');
+  function setOpen(open) {
+    drawer.classList.toggle('open', open);
+    overlay.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open);
+    drawer.setAttribute('aria-hidden', !open);
+  }
+  btn.addEventListener('click', function () { setOpen(!drawer.classList.contains('open')); });
+  overlay.addEventListener('click', function () { setOpen(false); });
+  document.getElementById('navClose').addEventListener('click', function () { setOpen(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+  drawer.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () { setOpen(false); });
+  });
+})();
+</script>

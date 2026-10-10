@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Talk to Welfare Officer</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="personnel-page">
+<div class="wrap">
+
+    {% include "_header.html" %}
+
+  <h2 class="page-title">Talk to Welfare Officer</h2>
+  <p class="empty-note" style="margin-bottom:22px;">Share what's on your mind. Your welfare officer will follow up.</p>
+
+  <div class="card" id="talk">
+    <h3>New Message</h3>
+
+    {% if pending_request %}
+      <div class="empty-note" style="padding:12px 0;">
+        Your request is with the welfare officer. You'll see their response here once reviewed.
+      </div>
+      <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; color:var(--steel); margin-top:8px;">
+        Status: <strong>{{ pending_request.stage or "New" }}</strong> &middot; Submitted on {{ pending_request.created_date }}
+      </p>
+    {% else %}
+      <form method="POST" action="/submit_stress_request">
+        <input type="hidden" name="from" value="talk">
+        <label>{% if resolved_request %}Have something new on your mind?{% else %}Share what's stressing you.{% endif %}</label>
+        <textarea name="message" required style="width:100%; min-height:90px; padding:10px; border:1px solid var(--line); border-radius:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; margin-bottom:16px; resize:vertical;" placeholder="e.g. Feeling overwhelmed with back-to-back night shifts..."></textarea>
+        <button type="submit" class="btn">Send to Welfare Officer</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin-top:22px;">
+    <h3>Your Requests</h3>
+    {% if requests %}
+      {% for r in requests %}
+      <div style="padding:14px 0; {% if not loop.last %}border-bottom:1px solid var(--line);{% endif %}">
+        <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12px; color:var(--steel); margin:0 0 6px;">
+          {{ r.created_date }} &middot; Status: <strong>{{ r.stage or "New" }}</strong>
+        </p>
+        <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); margin:0 0 8px;">{{ r.message }}</p>
+        {% if r.remedy %}
+        <div style="background:rgba(76,122,94,0.1); border-left:3px solid var(--signal-low); padding:10px 14px; border-radius:6px;">
+          <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12px; font-weight:600; color:var(--steel-deep); margin:0 0 4px;">Officer's Response</p>
+          <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); margin:0;">{{ r.remedy }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="empty-note">You haven't sent any requests yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>

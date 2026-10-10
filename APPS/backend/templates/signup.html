@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Sign Up</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+
+  <div class="auth-brand-panel">
+    <div class="brand-mark">APPS</div>
+    <h1>Join the Welfare Monitoring Network</h1>
+    <p>Register once to start your daily check-ins, and let the system watch out for you before strain becomes a bigger problem.</p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <h1>Create Account</h1>
+
+      <form method="POST" action="/signup">
+        <label>Name</label>
+        <input type="text" name="name" required>
+
+        <label>Unit</label>
+        <input type="text" name="unit" required>
+<label>Password</label>
+<input type="password" name="password" required>
+
+        <button type="submit" class="btn">Sign Up</button>
+      </form>
+
+      <p class="foot-link">Already have an account? <a href="/login">Login</a></p>
+      <p class="foot-link" style="margin-top:8px;">Are you a Welfare Officer? <a href="/officer_signup">Register here</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

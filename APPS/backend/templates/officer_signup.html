@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Officer Registration</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+
+  <div class="auth-brand-panel">
+    <div class="brand-mark">APPS</div>
+    <h1>Welfare Officer Registration</h1>
+    <p>This page is for authorized Welfare Officers only. Personnel should use the regular sign-up page.</p>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <h1>Officer Sign Up</h1>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/officer_signup">
+        <label>Name</label>
+        <input type="text" name="name" required>
+
+        <label>Unit</label>
+        <input type="text" name="unit" required>
+
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Officer Access Code</label>
+        <input type="text" name="access_code" placeholder="e.g. OFC-XXXXX" required>
+
+        <button type="submit" class="btn">Register as Officer</button>
+      </form>
+
+      <p class="foot-link">Already have an account? <a href="/login">Login</a></p>
+      <p class="foot-link" style="margin-top:8px;">Are you Personnel? <a href="/signup">Register here</a></p>
+      <p class="foot-link" style="margin-top:8px;">Are you a Senior Admin? <a href="/admin_signup">Register here</a></p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

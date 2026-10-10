@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>APPS - Personnel List</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+  /* ===== Personnel list (roomier layout) ===== */
+  .p-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .p-head h3{border:none !important; margin:0 !important; padding:0 !important; font-size:15px !important;}
+  .p-count{font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; color:var(--steel);}
+  .p-count b{color:var(--ink);}
+
+  .p-toolbar{display:grid; grid-template-columns:repeat(4, 1fr) auto; gap:10px; margin-bottom:6px;}
+  .p-toolbar #searchBox{grid-column:1 / -1; width:100%; box-sizing:border-box;}
+  .p-toolbar input, .p-toolbar select{
+    font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; color:var(--ink);
+    padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; min-width:0;
+  }
+  .p-toolbar input:focus, .p-toolbar select:focus{outline:2px solid rgba(60,82,102,0.35); outline-offset:1px;}
+  .p-reset{
+    font-family:'Helvetica Neue',Arial,sans-serif; font-size:12.5px; font-weight:600; color:var(--steel-deep);
+    background:transparent; border:1px solid var(--line); border-radius:8px; padding:10px 14px; cursor:pointer;
+  }
+  .p-reset:hover{background:rgba(60,82,102,0.08);}
+
+  .p-list{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  .p-row{
+    display:grid; grid-template-columns:46px minmax(0,1fr) 78px 78px 118px; align-items:center; gap:22px;
+    padding:20px 22px; background:#fff; border:1px solid var(--line); border-left-width:4px; border-radius:10px;
+    text-decoration:none; color:inherit; transition:box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+  }
+  .p-row:hover{box-shadow:0 4px 14px rgba(16,27,38,0.09); transform:translateY(-1px);}
+  .p-row.r-high{border-left-color:var(--signal-high);}
+  .p-row.r-medium{border-left-color:var(--signal-med);}
+  .p-row.r-low{border-left-color:var(--signal-low);}
+
+  .p-avatar{
+    width:46px; height:46px; border-radius:50%; background:var(--steel-deep); color:#fdfdf9;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Helvetica Neue',Arial,sans-serif; font-weight:700; font-size:17px;
+  }
+  .p-name{font-family:'Helvetica Neue',Arial,sans-serif; font-size:16px; font-weight:700; color:var(--ink);
+          display:flex; align-items:center; flex-wrap:wrap; gap:10px; line-height:1.35;}
+  .p-meta{display:flex; flex-wrap:wrap; align-items:center; gap:6px 22px; margin-top:10px;
+          font-family:'Helvetica Neue',Arial,sans-serif; font-size:13px; line-height:1.5; color:var(--steel-deep);}
+  .p-meta .m-item{display:inline-flex; align-items:center; gap:7px;}
+  .p-meta .m-label{font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--steel); opacity:.8;}
+  .p-meta .m-val{font-weight:500;}
+  .p-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+  .p-chip{
+    font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; font-weight:600; line-height:1.2;
+    padding:6px 12px; border-radius:14px; background:rgba(60,82,102,0.1); color:var(--steel-deep);
+    border:1px solid var(--line); white-space:nowrap;
+  }
+  .p-chip.warn{background:rgba(184,134,60,0.15); color:#7a5718; border-color:rgba(184,134,60,0.35);}
+
+  .p-stat{text-align:center; font-family:'Helvetica Neue',Arial,sans-serif;}
+  .p-stat .v{display:block; font-size:19px; font-weight:700; color:var(--ink); letter-spacing:-0.01em;}
+  .p-stat .v small{font-size:12px; font-weight:600; color:var(--steel); margin-left:1px;}
+  .p-stat .l{display:block; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--steel); margin-top:3px;}
+
+  .p-status{display:flex; flex-direction:column; align-items:flex-end; gap:8px;}
+  .p-status .risk-tag{font-size:12.5px; padding:6px 16px; min-width:84px; text-align:center;}
+  .p-eng{font-family:'Helvetica Neue',Arial,sans-serif; font-size:12px; color:var(--steel-deep);
+         display:inline-flex; align-items:center; gap:6px;}
+  .p-eng i{width:8px; height:8px; border-radius:50%; background:var(--steel); display:inline-block;}
+  .p-eng.e-engaged i{background:var(--signal-low);}
+  .p-eng.e-fading i{background:var(--signal-med);}
+  .p-eng.e-quiet i{background:var(--signal-high);}
+
+  @media (max-width:760px){
+    .p-toolbar{grid-template-columns:1fr 1fr;}
+    .p-reset{grid-column:1 / -1;}
+    .p-row{grid-template-columns:46px minmax(0,1fr) auto; gap:12px 14px; padding:14px;}
+    .p-stat.s1{grid-row:2; grid-column:2; text-align:left;}
+    .p-stat.s2{grid-row:2; grid-column:3; text-align:right;}
+    .p-status{grid-row:1; grid-column:3; align-items:flex-end;}
+  }
+</style>
+</head>
+<body class="officer-page">
+<div class="wrap">
+
+    {% include "_header.html" %}
+
+  <h2 class="page-title">Personnel List</h2>
+  <p class="empty-note" style="margin-bottom:22px;">Everyone in your caseload, with their latest check-in.</p>
+
+  <div class="card">
+    <div class="p-head">
+      <h3>Personnel List</h3>
+      <span class="p-count">Showing <b id="shownCount">{{ total }}</b> of {{ total }}</span>
+    </div>
+
+    <div class="p-toolbar">
+      <input id="searchBox" type="text" placeholder="Search by name or unit..." oninput="filterTable()" autocomplete="off">
+      <select id="riskFilter" onchange="filterTable()">
+        <option value="">All Risk</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <select id="tagFilter" onchange="filterTable()">
+        <option value="">All Tags</option>
+        {% for t in all_tags %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+      </select>
+      <select id="ownerFilter" onchange="filterTable()">
+        <option value="">All Personnel</option>
+        <option value="mine">My personnel</option>
+        <option value="unassigned">Unassigned</option>
+      </select>
+      <select id="sortSelect" onchange="sortRows()">
+        <option value="default">Sort: Risk (High first)</option>
+        <option value="name">Name (A-Z)</option>
+        <option value="recent">Latest check-in</option>
+        <option value="sleep">Sleep (low to high)</option>
+        <option value="duty">Duty hours (high to low)</option>
+      </select>
+      <button type="button" class="p-reset" onclick="resetFilters()">Reset</button>
+    </div>
+
+    {% if personnel %}
+    <div class="p-list">
+      {% for p in personnel %}
+      {% set unit_txt = (p.unit or '')|string|trim %}
+      {% set user_tags = tags_by_user.get(p.id, []) %}
+      <a href="/officer/personnel/{{ p.id }}" class="personnel-row p-row r-{{ p.stress_level|lower }}"
+         data-idx="{{ loop.index }}"
+         data-name="{{ p.name|lower }}"
+         data-unit="{{ unit_txt|lower }}"
+         data-risk="{{ p.stress_level }}"
+         data-tags="{{ user_tags | join('|') | lower }}"
+         data-owner="{{ 'unassigned' if p.assigned_officer_id is none else 'mine' }}"
+         data-date="{{ p.date }}" data-sleep="{{ p.sleep_hours }}" data-duty="{{ p.duty_hours }}">
+
+        <div class="p-avatar">{{ p.name[0]|upper }}</div>
+
+        <div>
+          <div class="p-name">
+            {{ p.name }}
+            {% if p.assigned_officer_id is none %}<span class="p-chip warn">Unassigned</span>{% endif %}
+          </div>
+          <div class="p-meta">
+            <span class="m-item"><span class="m-label">ID</span><span class="m-val">#{{ p.id }}</span></span>
+            <span class="m-item"><span class="m-label">Unit</span><span class="m-val">{% if unit_txt %}{{ unit_txt }}{% else %}&mdash;{% endif %}</span></span>
+            <span class="m-item"><span class="m-label">Last check-in</span><span class="m-val">{% if p.days_since_checkin == 0 %}Today{% elif p.days_since_checkin == 1 %}Yesterday{% else %}{{ p.days_since_checkin }} days ago{% endif %}</span></span>
+          </div>
+          {% if user_tags %}
+          <div class="p-tags">
+            {% for t in user_tags[:2] %}<span class="p-chip">{{ t }}</span>{% endfor %}
+            {% if user_tags|length > 2 %}<span class="p-chip">+{{ user_tags|length - 2 }} more</span>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="p-stat s1"><span class="v">{{ '%.1f'|format(p.sleep_hours|float) }}<small>h</small></span><span class="l">Sleep</span></div>
+        <div class="p-stat s2"><span class="v">{{ '%.1f'|format(p.duty_hours|float) }}<small>h</small></span><span class="l">Duty</span></div>
+
+        <div class="p-status">
+          <span class="risk-tag badge-{{ p.stress_level|lower }}">{{ p.stress_level }}</span>
+          <span class="p-eng e-{{ p.engagement_label|lower }}"><i></i>{{ p.engagement_label }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <p id="noResults" class="empty-note" style="display:none; margin-top:16px;">No personnel match your search.</p>
+    {% else %}
+      <p class="empty-note">No personnel data yet.</p>
+    {% endif %}
+  </div>
+
+
+</div>
+
+<script>
+  function sortRows() {
+    const mode = document.getElementById('sortSelect').value;
+    const rows = Array.from(document.querySelectorAll('.personnel-row'));
+    if (!rows.length) return;
+
+    const num = (el, k) => parseFloat(el.dataset[k]) || 0;
+    const byIdx = (a, b) => num(a, 'idx') - num(b, 'idx');
+    const cmp = {
+      default: byIdx,
+      name:   (a, b) => a.dataset.name.localeCompare(b.dataset.name) || byIdx(a, b),
+      recent: (a, b) => b.dataset.date.localeCompare(a.dataset.date) || byIdx(a, b),
+      sleep:  (a, b) => num(a, 'sleep') - num(b, 'sleep') || byIdx(a, b),
+      duty:   (a, b) => num(b, 'duty') - num(a, 'duty') || byIdx(a, b)
+    }[mode];
+
+    rows.sort(cmp);
+    const parent = rows[0].parentNode;
+    rows.forEach(r => parent.appendChild(r));
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    const risk = document.getElementById('riskFilter').value;
+    const tag = document.getElementById('tagFilter').value.toLowerCase();
+    const owner = document.getElementById('ownerFilter').value;
+    let visibleCount = 0;
+    document.querySelectorAll('.personnel-row').forEach(row => {
+      const hay = (row.dataset.name || '') + ' ' + (row.dataset.unit || '');
+      const rowTags = (row.dataset.tags || '').split('|');
+      const match = (!q || hay.includes(q))
+        && (!risk || row.dataset.risk === risk)
+        && (!tag || rowTags.includes(tag))
+        && (!owner || row.dataset.owner === owner);
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+    const noResults = document.getElementById('noResults');
+    if (noResults) noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    const shown = document.getElementById('shownCount');
+    if (shown) shown.textContent = visibleCount;
+  }
+
+  function resetFilters() {
+    ['searchBox', 'riskFilter', 'tagFilter', 'ownerFilter'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('sortSelect').value = 'default';
+    sortRows();
+    filterTable();
+  }
+</script>
+</body>
+</html>
