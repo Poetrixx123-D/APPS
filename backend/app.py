@@ -498,28 +498,21 @@ def signup():
     return render_template("signup.html", error=error)
 
 
-def _staff_signup(template, codes_table, role, redirect_target):
+def _staff_signup(template, role, redirect_target):
     if "user_id" in session:
         return redirect(home_for_role(session.get("role")))
     error = None
     if request.method == "POST":
         name, unit, password, error = _read_signup_form()
-        entered_code = request.form.get("access_code", "").strip()
         if not error:
             conn = get_db()
-            code_row = conn.execute(
-                f"SELECT * FROM {codes_table} WHERE code = ? AND is_used = 0", (entered_code,)
-            ).fetchone()
-            if not code_row:
-                error = "Invalid or already-used access code. Please contact your administrator."
-            elif _name_taken(conn, name):
+            if _name_taken(conn, name):
                 error = "That name is already registered. Please use a different name."
             else:
                 conn.execute(
                     "INSERT INTO Users (name, unit, password, role) VALUES (?, ?, ?, ?)",
                     (name, unit, generate_password_hash(password), role)
                 )
-                conn.execute(f"UPDATE {codes_table} SET is_used = 1 WHERE code = ?", (entered_code,))
                 conn.commit()
                 conn.close()
                 return redirect(url_for(redirect_target))
@@ -529,12 +522,12 @@ def _staff_signup(template, codes_table, role, redirect_target):
 
 @app.route("/officer_signup", methods=["GET", "POST"])
 def officer_signup():
-    return _staff_signup("officer_signup.html", "OfficerCodes", "officer", "officer_login")
+    return _staff_signup("officer_signup.html", "officer", "officer_login")
 
 
 @app.route("/admin_signup", methods=["GET", "POST"])
 def admin_signup():
-    return _staff_signup("admin_signup.html", "AdminCodes", "admin", "admin_login")
+    return _staff_signup("admin_signup.html", "admin", "admin_login")
 
 
 def _password_ok(conn, user, entered):
@@ -626,7 +619,7 @@ def officer_login():
         "submit_label": "Login as Officer",
         "signup_url": url_for("officer_signup"),
         "signup_prompt": "New Welfare Officer?",
-        "signup_link_text": "Register with Access Code",
+        "signup_link_text": "Officer Sign Up",
     })
 
 
@@ -642,7 +635,7 @@ def admin_login():
         "submit_label": "Login as Admin",
         "signup_url": url_for("admin_signup"),
         "signup_prompt": "New Administrator?",
-        "signup_link_text": "Register with Access Code",
+        "signup_link_text": "Admin Sign Up",
     })
 
 
@@ -1398,8 +1391,6 @@ def count_levels(levels):
 def admin_dashboard():
     conn = get_db()
     unit_summary, levels = get_unit_summary(conn)
-    officer_codes = conn.execute("SELECT code, is_used FROM OfficerCodes ORDER BY is_used ASC, id DESC").fetchall()
-    admin_codes = conn.execute("SELECT code, is_used FROM AdminCodes ORDER BY is_used ASC, id DESC").fetchall()
     conn.close()
     total, high, medium, low = count_levels(levels)
     return render_template(
@@ -1407,8 +1398,6 @@ def admin_dashboard():
         admin_name=session["user_name"],
         unit_summary=unit_summary,
         total_personnel=total, total_high=high, total_medium=medium, total_low=low,
-        officer_codes=officer_codes,
-        admin_codes=admin_codes,
     )
 
 

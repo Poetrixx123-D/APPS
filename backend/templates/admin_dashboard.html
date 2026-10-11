@@ -81,67 +81,6 @@
   </div>
 
 
-  <!-- Role Access Codes Management -->
-  <div class="card" style="margin-top:24px;">
-    <h3 style="border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;">Role Registration Access Codes</h3>
-    <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12.5px; color:var(--steel); margin:0 0 18px;">
-      Share these one-time access codes with designated Welfare Officers and Senior Admins for account registration.
-    </p>
-
-    <!-- Officer Codes -->
-    <div style="margin-bottom:24px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <strong style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep);">
-          🛡️ Welfare Officer Registration Codes
-        </strong>
-        <form method="POST" action="/admin/generate_code" style="margin:0;">
-          <input type="hidden" name="type" value="officer">
-          <button type="submit" class="btn" style="padding:6px 12px; font-size:11.5px; width:auto;">+ Generate Officer Code</button>
-        </form>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        {% for oc in officer_codes %}
-        <div class="code-chip {% if oc.is_used %}chip-used{% else %}chip-active{% endif %}">
-          <code>{{ oc.code }}</code>
-          {% if oc.is_used %}
-            <span class="tag-status tag-used">Used</span>
-          {% else %}
-            <span class="tag-status tag-available">Active</span>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Admin Codes -->
-    <div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <strong style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep);">
-          ⚙️ Senior Administrator Registration Codes
-        </strong>
-        <form method="POST" action="/admin/generate_code" style="margin:0;">
-          <input type="hidden" name="type" value="admin">
-          <button type="submit" class="btn" style="padding:6px 12px; font-size:11.5px; width:auto; background:var(--steel);">+ Generate Admin Code</button>
-        </form>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        {% for ac in admin_codes %}
-        <div class="code-chip {% if ac.is_used %}chip-used{% else %}chip-active{% endif %}">
-          <code>{{ ac.code }}</code>
-          {% if ac.is_used %}
-            <span class="tag-status tag-used">Used</span>
-          {% else %}
-            <span class="tag-status tag-available">Active</span>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-  </div>
-
 </div>
 </body>
 </html>
