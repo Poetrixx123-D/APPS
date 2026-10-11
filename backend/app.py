@@ -478,56 +478,63 @@ def signup():
     if "user_id" in session:
         return redirect(home_for_role(session.get("role")))
     error = None
+    role = request.args.get("role", "personnel").lower()
+    if role not in ("personnel", "officer", "admin"):
+        role = "personnel"
+
     if request.method == "POST":
-        name, unit, password, error = _read_signup_form()
-        if not error:
+        name = request.form.get("name", "").strip()
+        unit = request.form.get("unit", "").strip()
+        password = request.form.get("password", "")
+        role = request.form.get("role", "personnel").lower()
+        if role not in ("personnel", "officer", "admin"):
+            role = "personnel"
+
+        if not name or len(name) > 50:
+            error = "Please enter a name (up to 50 characters)."
+        elif len(unit) > 50:
+            error = "Unit/Department name is too long (max 50 characters)."
+        elif len(password) < 6:
+            error = "Password must be at least 6 characters."
+        else:
             conn = get_db()
             if _name_taken(conn, name):
                 error = "That name is already registered. Please log in or use a different name."
                 conn.close()
             else:
-                officer_id = pick_officer(conn)
-                conn.execute(
+                assigned_officer = pick_officer(conn) if role == "personnel" else None
+                cur = conn.execute(
                     "INSERT INTO Users (name, unit, password, role, assigned_officer_id) "
-                    "VALUES (?, ?, ?, 'personnel', ?)",
-                    (name, unit, generate_password_hash(password), officer_id)
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (name, unit, generate_password_hash(password), role, assigned_officer)
                 )
                 conn.commit()
+                new_id = cur.lastrowid
                 conn.close()
-                return redirect(url_for("login"))
-    return render_template("signup.html", error=error)
 
+                # Automatically log in the user upon registration
+                session.clear()
+                session.permanent = True
+                session["user_id"] = new_id
+                session["user_name"] = name
+                session["role"] = role
+                return redirect(home_for_role(role))
 
-def _staff_signup(template, role, redirect_target):
-    if "user_id" in session:
-        return redirect(home_for_role(session.get("role")))
-    error = None
-    if request.method == "POST":
-        name, unit, password, error = _read_signup_form()
-        if not error:
-            conn = get_db()
-            if _name_taken(conn, name):
-                error = "That name is already registered. Please use a different name."
-            else:
-                conn.execute(
-                    "INSERT INTO Users (name, unit, password, role) VALUES (?, ?, ?, ?)",
-                    (name, unit, generate_password_hash(password), role)
-                )
-                conn.commit()
-                conn.close()
-                return redirect(url_for(redirect_target))
-            conn.close()
-    return render_template(template, error=error)
+    return render_template("signup.html", error=error, active_role=role)
 
 
 @app.route("/officer_signup", methods=["GET", "POST"])
 def officer_signup():
-    return _staff_signup("officer_signup.html", "officer", "officer_login")
+    if request.method == "POST":
+        return signup()
+    return redirect(url_for("signup", role="officer"))
 
 
 @app.route("/admin_signup", methods=["GET", "POST"])
 def admin_signup():
-    return _staff_signup("admin_signup.html", "admin", "admin_login")
+    if request.method == "POST":
+        return signup()
+    return redirect(url_for("signup", role="admin"))
 
 
 def _password_ok(conn, user, entered):
@@ -543,9 +550,14 @@ def _password_ok(conn, user, entered):
     return False
 
 
-def _handle_login(expected_role, template_args):
+@app.route("/login", methods=["GET", "POST"])
+@app.route("/personnel_login", methods=["GET", "POST"])
+@app.route("/officer_login", methods=["GET", "POST"])
+@app.route("/admin_login", methods=["GET", "POST"])
+def login():
     if "user_id" in session:
         return redirect(home_for_role(session.get("role")))
+
     error = None
     if request.method == "POST":
         name = request.form.get("name", "").strip()
@@ -554,99 +566,35 @@ def _handle_login(expected_role, template_args):
 
         if login_locked(key):
             error = "Too many failed attempts. Please wait a few minutes and try again."
+        elif not name or not password:
+            error = "Please enter both your name and password."
         else:
             conn = get_db()
             candidates = conn.execute(
                 "SELECT * FROM Users WHERE LOWER(TRIM(name)) = LOWER(?) ORDER BY id", (name,)
             ).fetchall()
             valid_users = [u for u in candidates if _password_ok(conn, u, password)]
-            user = next((u for u in valid_users if u["role"] == expected_role), None)
             conn.close()
 
-            if user:
+            if valid_users:
                 _LOGIN_FAILS.pop(key, None)
+                user = valid_users[0]
                 session.clear()
                 session.permanent = True
                 session["user_id"] = user["id"]
                 session["user_name"] = user["name"]
                 session["role"] = user["role"]
                 return redirect(home_for_role(user["role"]))
-            elif valid_users:
-                record_login_fail(key)
-                actual_role = valid_users[0]["role"]
-                if expected_role == "personnel":
-                    role_label = "Welfare Officer" if actual_role == "officer" else "Senior Admin"
-                    error = f"This account is registered as a {role_label}. Please use the {role_label} Portal."
-                elif expected_role == "officer":
-                    role_label = "Personnel" if actual_role == "personnel" else "Senior Admin"
-                    error = f"Access denied: This account is registered as {role_label}, not a Welfare Officer."
-                elif expected_role == "admin":
-                    role_label = "Personnel" if actual_role == "personnel" else "Welfare Officer"
-                    error = f"Access denied: This account is registered as {role_label}, not a Senior Admin."
             else:
                 record_login_fail(key)
                 error = "Invalid name or password. Please try again."
 
-    return render_template("login.html", error=error, **template_args)
-
-
-@app.route("/login", methods=["GET", "POST"])
-@app.route("/personnel_login", methods=["GET", "POST"])
-def login():
-    return _handle_login("personnel", {
-        "active_role": "personnel",
-        "role_title": "Personnel Login",
-        "role_badge": "PERSONNEL",
-        "brand_heading": "Personnel Stress & Welfare Monitoring",
-        "brand_sub": "Daily check-ins, personal wellness trends, and confidential communication with your unit welfare officer.",
-        "action_url": url_for("login"),
-        "submit_label": "Login as Personnel",
-        "signup_url": url_for("signup"),
-        "signup_prompt": "No personnel account yet?",
-        "signup_link_text": "Personnel Sign Up",
-    })
-
-
-@app.route("/officer_login", methods=["GET", "POST"])
-def officer_login():
-    return _handle_login("officer", {
-        "active_role": "officer",
-        "role_title": "Welfare Officer Login",
-        "role_badge": "OFFICER",
-        "brand_heading": "Welfare Officer Command Portal",
-        "brand_sub": "Monitor unit stress levels, respond to counseling requests, and coordinate welfare support.",
-        "action_url": url_for("officer_login"),
-        "submit_label": "Login as Officer",
-        "signup_url": url_for("officer_signup"),
-        "signup_prompt": "New Welfare Officer?",
-        "signup_link_text": "Officer Sign Up",
-    })
-
-
-@app.route("/admin_login", methods=["GET", "POST"])
-def admin_login():
-    return _handle_login("admin", {
-        "active_role": "admin",
-        "role_title": "Senior Admin Login",
-        "role_badge": "ADMIN",
-        "brand_heading": "Senior Administration Console",
-        "brand_sub": "High-level department analytics, unit breakdown reports, and system access provisioning.",
-        "action_url": url_for("admin_login"),
-        "submit_label": "Login as Admin",
-        "signup_url": url_for("admin_signup"),
-        "signup_prompt": "New Administrator?",
-        "signup_link_text": "Admin Sign Up",
-    })
+    return render_template("login.html", error=error)
 
 
 @app.route("/logout")
 def logout():
-    role = session.get("role")
     session.clear()
-    if role == "officer":
-        return redirect(url_for("officer_login"))
-    elif role == "admin":
-        return redirect(url_for("admin_login"))
     return redirect(url_for("login"))
 
 

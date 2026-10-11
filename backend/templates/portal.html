@@ -28,6 +28,10 @@
     <div class="brand-mark">APPS</div>
     <h1>Personnel Stress &amp; Welfare Monitoring</h1>
     <p>Select your designated role below to sign in or register for your dedicated portal.</p>
+    <div style="display:flex; justify-content:center; gap:12px; margin-top:20px; flex-wrap:wrap;">
+      <a href="/login" class="btn" style="padding:12px 28px; font-size:13.5px;">Sign In to Any Account &rarr;</a>
+      <a href="/signup" class="btn-outline" style="padding:12px 24px; font-size:13.5px;">Create New Account</a>
+    </div>
   </div>
 
   <div class="portal-grid">
@@ -40,7 +44,7 @@
       <p>Submit daily wellness check-ins, view stress trends, receive personalized insights, and request confidential officer counseling.</p>
       <div class="btn-group">
         <a href="/login" class="btn">Personnel Login</a>
-        <a href="/signup" class="btn-outline">Register as Personnel</a>
+        <a href="/signup?role=personnel" class="btn-outline">Register as Personnel</a>
       </div>
     </div>
 
@@ -51,8 +55,8 @@
       <h2>Welfare Officer</h2>
       <p>Monitor assigned troop readiness, track high-strain alerts, respond to personnel counseling requests, and maintain activity logs.</p>
       <div class="btn-group">
-        <a href="/officer_login" class="btn">Officer Login</a>
-        <a href="/officer_signup" class="btn-outline">Register as Officer</a>
+        <a href="/login" class="btn">Officer Login</a>
+        <a href="/signup?role=officer" class="btn-outline">Register as Officer</a>
       </div>
     </div>
 
@@ -63,8 +67,8 @@
       <h2>Senior Admin</h2>
       <p>Oversee aggregate organization readiness, analyze unit-by-unit statistics, and export executive reports.</p>
       <div class="btn-group">
-        <a href="/admin_login" class="btn">Admin Login</a>
-        <a href="/admin_signup" class="btn-outline">Register as Admin</a>
+        <a href="/login" class="btn">Admin Login</a>
+        <a href="/signup?role=admin" class="btn-outline">Register as Admin</a>
       </div>
     </div>
 

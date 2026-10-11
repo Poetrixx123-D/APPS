@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APPS - {{ role_title or 'Personnel Login' }}</title>
+<title>APPS - Unified Login</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script>
   (function(){
@@ -26,39 +26,41 @@
 
   <div class="auth-brand-panel">
     <div class="brand-mark">APPS</div>
-    <h1>{{ brand_heading or 'Personnel Stress & Welfare Monitoring' }}</h1>
-    <p>{{ brand_sub or 'Proactive, AI-assisted check-ins that help welfare officers spot strain early and respond with the right support.' }}</p>
+    <h1>Unified Welfare &amp; Operational Network</h1>
+    <p>One seamless portal for Service Personnel, Welfare Officers, and Senior Administrators. Enter your credentials to automatically connect to your dashboard.</p>
   </div>
 
   <div class="auth-form-panel">
     <div class="auth-card">
-      <div class="brand">APPS <span>•</span> {{ role_badge or 'PERSONNEL' }}</div>
-      <h1>{{ role_title or 'Personnel Login' }}</h1>
-
-      <!-- Role Tabs for quick role-specific login navigation -->
-      <div class="role-tabs">
-        <a href="/login" class="role-tab {% if active_role == 'personnel' or not active_role %}active{% endif %}">🎖️ Personnel</a>
-        <a href="/officer_login" class="role-tab {% if active_role == 'officer' %}active{% endif %}">🛡️ Officer</a>
-        <a href="/admin_login" class="role-tab {% if active_role == 'admin' %}active{% endif %}">⚙️ Admin</a>
-      </div>
+      <div class="brand">APPS <span>•</span> UNIFIED LOGIN</div>
+      <h1>Sign In to APPS</h1>
+      <p class="sub">Enter your registered name and password to access your dashboard.</p>
 
       {% if error %}
         <div class="error-box">{{ error }}</div>
       {% endif %}
 
-      <form method="POST" action="{{ action_url or '/login' }}">
+      <form method="POST" action="/login">
         <label>Name</label>
-        <input type="text" name="name" required autofocus>
+        <input type="text" name="name" placeholder="Enter your registered name" required autofocus>
 
         <label>Password</label>
-        <input type="password" name="password" required>
+        <input type="password" name="password" placeholder="Enter your password" required>
 
-        <button type="submit" class="btn">{{ submit_label or 'Login as Personnel' }}</button>
+        <button type="submit" class="btn">Sign In to Dashboard &rarr;</button>
       </form>
 
-      {% if signup_url %}
-        <p class="foot-link">{{ signup_prompt or 'No account yet?' }} <a href="{{ signup_url }}">{{ signup_link_text or 'Sign up' }}</a></p>
-      {% endif %}
+      <p class="foot-link">Don't have an account? <a href="/signup">Create an Account</a></p>
+
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line); text-align:center;">
+        <p style="font-size:11px; color:var(--steel); margin:0 0 10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">New Registration by Role</p>
+        <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+          <a href="/signup?role=personnel" class="role-chip-link">👤 Personnel</a>
+          <a href="/signup?role=officer" class="role-chip-link">🛡️ Welfare Officer</a>
+          <a href="/signup?role=admin" class="role-chip-link">⚡ Senior Admin</a>
+        </div>
+      </div>
+
       <p class="foot-link" style="margin-top:14px;"><a href="/portal" style="color:var(--steel); text-decoration:none;">← Back to Portal Selection</a></p>
     </div>
   </div>

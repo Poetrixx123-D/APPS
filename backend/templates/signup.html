@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APPS - Personnel Registration</title>
+<title>APPS - Account Registration</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script>
   (function(){
@@ -26,33 +26,43 @@
 
   <div class="auth-brand-panel">
     <div class="brand-mark">APPS</div>
-    <h1>Join the Welfare Monitoring Network</h1>
-    <p>Register once to start your daily check-ins, and let the system watch out for you before strain becomes a bigger problem.</p>
+    <h1 id="brandTitle">Join the Welfare Monitoring Network</h1>
+    <p id="brandSub">Register once to start your daily check-ins, and let the system watch out for you before strain becomes a bigger problem.</p>
   </div>
 
   <div class="auth-form-panel">
     <div class="auth-card">
-      <div class="brand">APPS <span>•</span> PERSONNEL</div>
-      <h1>Personnel Sign Up</h1>
+      <div class="brand" id="brandPill">APPS <span>•</span> PERSONNEL</div>
+      <h1 id="formTitle">Personnel Sign Up</h1>
+      <p class="sub">Select your role and enter your details to create an account.</p>
+
+      <!-- Role Selector Tabs -->
+      <div class="role-tabs" id="roleTabs">
+        <button type="button" class="role-tab active" data-role="personnel" onclick="switchRole('personnel')">👤 Personnel</button>
+        <button type="button" class="role-tab" data-role="officer" onclick="switchRole('officer')">🛡️ Welfare Officer</button>
+        <button type="button" class="role-tab" data-role="admin" onclick="switchRole('admin')">⚡ Senior Admin</button>
+      </div>
 
       {% if error %}
         <div class="error-box">{{ error }}</div>
       {% endif %}
 
       <form method="POST" action="/signup">
-        <label>Name</label>
-        <input type="text" name="name" required autofocus>
+        <input type="hidden" name="role" id="roleInput" value="{{ active_role or 'personnel' }}">
 
-        <label>Unit</label>
-        <input type="text" name="unit" placeholder="e.g. 1st Infantry / Alpha" required>
+        <label>Name</label>
+        <input type="text" name="name" placeholder="Full Name" required autofocus>
+
+        <label id="unitLabel">Unit</label>
+        <input type="text" name="unit" id="unitInput" placeholder="e.g. 1st Infantry / Alpha" required>
 
         <label>Password</label>
         <input type="password" name="password" minlength="6" placeholder="Minimum 6 characters" required>
 
-        <button type="submit" class="btn">Register as Personnel</button>
+        <button type="submit" class="btn" id="submitBtn">Register as Personnel</button>
       </form>
 
-      <p class="foot-link">Already have a personnel account? <a href="/login">Personnel Login</a></p>
+      <p class="foot-link">Already have an account? <a href="/login">Sign In Here</a></p>
       <p class="foot-link" style="margin-top:14px;"><a href="/portal" style="color:var(--steel); text-decoration:none;">← Back to Portal Selection</a></p>
     </div>
   </div>
@@ -60,6 +70,77 @@
 </div>
 
 <script>
+  var roleData = {
+    personnel: {
+      pill: 'APPS • PERSONNEL',
+      title: 'Personnel Sign Up',
+      brandTitle: 'Join the Welfare Monitoring Network',
+      brandSub: 'Register once to start your daily check-ins, and let the system watch out for you before strain becomes a bigger problem.',
+      unitLabel: 'Unit',
+      unitPlaceholder: 'e.g. 1st Infantry / Alpha',
+      btnText: 'Register as Personnel'
+    },
+    officer: {
+      pill: 'APPS • WELFARE OFFICER',
+      title: 'Welfare Officer Sign Up',
+      brandTitle: 'Welfare Officer Command Portal',
+      brandSub: 'Register your Welfare Officer account to coordinate stress monitoring, support requests, and counseling.',
+      unitLabel: 'Unit / Station',
+      unitPlaceholder: 'e.g. 1st Infantry / Alpha',
+      btnText: 'Register as Officer'
+    },
+    admin: {
+      pill: 'APPS • SENIOR ADMIN',
+      title: 'Senior Admin Sign Up',
+      brandTitle: 'Senior Administration Console',
+      brandSub: 'Register your Senior Administrator account to access organization metrics, reports, and unit breakdowns.',
+      unitLabel: 'Unit / Department',
+      unitPlaceholder: 'e.g. HQ Command / Welfare Directorate',
+      btnText: 'Register as Senior Admin'
+    }
+  };
+
+  function switchRole(role) {
+    if (!roleData[role]) role = 'personnel';
+    var d = roleData[role];
+
+    // Update active tab buttons
+    document.querySelectorAll('.role-tab').forEach(function(tab) {
+      if (tab.getAttribute('data-role') === role) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update hidden form input
+    document.getElementById('roleInput').value = role;
+
+    // Update UI text and placeholders
+    document.getElementById('brandPill').innerHTML = d.pill.replace('•', '<span>•</span>');
+    document.getElementById('formTitle').textContent = d.title;
+    document.getElementById('brandTitle').textContent = d.brandTitle;
+    document.getElementById('brandSub').textContent = d.brandSub;
+    document.getElementById('unitLabel').textContent = d.unitLabel;
+    document.getElementById('unitInput').placeholder = d.unitPlaceholder;
+    document.getElementById('submitBtn').textContent = d.btnText;
+
+    // Update URL query string smoothly
+    try {
+      var url = new URL(window.location);
+      url.searchParams.set('role', role);
+      window.history.replaceState({}, '', url);
+    } catch(e) {}
+  }
+
+  // Initialize on page load
+  (function initRole() {
+    var params = new URLSearchParams(window.location.search);
+    var initial = params.get('role') || '{{ active_role or "personnel" }}';
+    switchRole(initial);
+  })();
+
+  // Theme Toggle Handler
   (function(){
     function updateIcons(dark) {
       document.querySelectorAll('.theme-toggle-icon').forEach(function(i){ i.textContent = dark ? '☀️' : '🌙'; });
