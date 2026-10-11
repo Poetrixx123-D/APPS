@@ -80,33 +80,6 @@
     </div>
   </div>
 
-  <!-- Unit Summary Card -->
-  <div class="card" style="margin-top:24px;">
-    <h3 style="border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:16px;">Unit Overview</h3>
-
-    {% if unit_summary %}
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
-      {% for unit, counts in unit_summary.items() %}
-      <div onclick="window.location='{{ url_for('admin_unit_detail', unit_name=unit) }}'"
-           style="cursor:pointer; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; transition: box-shadow 0.15s ease;"
-           onmouseover="this.style.boxShadow='0 3px 10px rgba(16,27,38,0.08)';"
-           onmouseout="this.style.boxShadow='none';">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <strong style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13.5px;">{{ unit }}</strong>
-          <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:11px; background:var(--paper); padding:2px 6px; border-radius:8px; color:var(--steel);">{{ counts.total }}</span>
-        </div>
-        <div style="display:flex; gap:12px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:11px;">
-          <span style="color:var(--signal-high);"><strong>{{ counts.High }}</strong> High</span>
-          <span style="color:var(--signal-med);"><strong>{{ counts.Medium }}</strong> Med</span>
-          <span style="color:var(--signal-low);"><strong>{{ counts.Low }}</strong> Low</span>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-      <p class="empty-note">No unit data available yet.</p>
-    {% endif %}
-  </div>
 
   <!-- Role Access Codes Management -->
   <div class="card" style="margin-top:24px;">
