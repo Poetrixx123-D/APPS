@@ -916,7 +916,7 @@ def submit_survey():
         )
     conn.commit()
     conn.close()
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("results", just_submitted=1))
 
 
 @app.route("/talk_to_officer")

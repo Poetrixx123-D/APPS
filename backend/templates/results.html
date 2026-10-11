@@ -15,6 +15,13 @@
     <p>Full history of your daily check-ins and stress readings</p>
   </div>
 
+  {% if request.args.get('just_submitted') %}
+  <div style="background:#eef6f0; border:1px solid #c3e2cb; color:#21542f; padding:12px 18px; border-radius:8px; margin-bottom:20px; display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:500;">
+    <span style="font-size:18px;">✅</span>
+    <span>Today's check-in has been submitted successfully! Here are your latest results.</span>
+  </div>
+  {% endif %}
+
   <div style="margin-bottom:20px;">
     <a href="/dashboard" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:transparent; color:var(--steel-deep); border:1.5px solid var(--line); border-radius:7px; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:600; font-size:12.5px; letter-spacing:0.02em; text-decoration:none; transition: background 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.background='var(--card)'; this.style.borderColor='var(--steel-deep)';" onmouseout="this.style.background='transparent'; this.style.borderColor='var(--line)';">&larr; Back to Check-in</a>
   </div>
