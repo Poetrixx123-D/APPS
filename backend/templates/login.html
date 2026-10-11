@@ -5,8 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>APPS - {{ role_title or 'Personnel Login' }}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>
+  (function(){
+    var t = localStorage.getItem('apps_theme');
+    if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
 </head>
 <body>
+
+<div style="position:fixed; top:20px; right:24px; z-index:90;">
+  <button type="button" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+    <span class="theme-toggle-icon">🌙</span>
+  </button>
+</div>
+
 <div class="auth-shell">
 
   <div class="auth-brand-panel">
@@ -49,5 +64,22 @@
   </div>
 
 </div>
+
+<script>
+  (function(){
+    function updateIcons(dark) {
+      document.querySelectorAll('.theme-toggle-icon').forEach(function(i){ i.textContent = dark ? '☀️' : '🌙'; });
+    }
+    updateIcons(document.documentElement.classList.contains('dark'));
+    document.querySelectorAll('.theme-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('apps_theme', isDark ? 'dark' : 'light');
+        updateIcons(isDark);
+      });
+    });
+  })();
+</script>
+
 </body>
 </html>

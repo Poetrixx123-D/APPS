@@ -1,6 +1,15 @@
 {% set role = session.get('role') %}
 {% set p = request.path %}
 
+<script>
+  (function(){
+    var t = localStorage.getItem('apps_theme');
+    if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
+
 <header class="top">
   <div style="display:flex; align-items:center; gap:12px;">
     <button type="button" id="navToggle" class="nav-toggle" aria-label="Open menu"
@@ -9,9 +18,14 @@
     </button>
     <div class="mark">APPS</div>
   </div>
-  <span class="role-pill">
-    {{ session.get('user_name') }}{% if role == 'officer' %} (Officer){% elif role == 'admin' %} (Senior Admin){% endif %}
-  </span>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
+      <span class="theme-toggle-icon">🌙</span>
+    </button>
+    <span class="role-pill">
+      {{ session.get('user_name') }}{% if role == 'officer' %} (Officer){% elif role == 'admin' %} (Senior Admin){% endif %}
+    </span>
+  </div>
 </header>
 
 <div id="navOverlay" class="nav-overlay"></div>
@@ -85,5 +99,22 @@
   drawer.querySelectorAll('a').forEach(function (a) {
     a.addEventListener('click', function () { setOpen(false); });
   });
+
+  /* Theme Toggle Handler */
+  (function initTheme() {
+    function updateIcons(dark) {
+      document.querySelectorAll('.theme-toggle-icon').forEach(function(i) {
+        i.textContent = dark ? '☀️' : '🌙';
+      });
+    }
+    updateIcons(document.documentElement.classList.contains('dark'));
+    document.querySelectorAll('.theme-toggle').forEach(function(toggleBtn) {
+      toggleBtn.addEventListener('click', function() {
+        var isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('apps_theme', isDark ? 'dark' : 'light');
+        updateIcons(isDark);
+      });
+    });
+  })();
 })();
 </script>
