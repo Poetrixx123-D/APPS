@@ -544,10 +544,10 @@ def _password_ok(conn, user, entered):
     return False
 
 
-@app.route("/login", methods=["GET", "POST"])
 @app.route("/personnel_login", methods=["GET", "POST"])
 @app.route("/officer_login", methods=["GET", "POST"])
 @app.route("/admin_login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if "user_id" in session:
         return redirect(home_for_role(session.get("role")))
