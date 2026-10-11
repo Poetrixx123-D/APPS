@@ -2095,3 +2095,150 @@ html.dark .tag-chip {
   border-color: rgba(255, 255, 255, 0.15);
   color: #cbd5e1;
 }
+
+/* ---------- Avatars ---------- */
+.avatar-circle,
+.p-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1e293b;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+html.dark .avatar-circle,
+html.dark .p-avatar {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.45);
+}
+
+/* ---------- Personnel List Item (Unit Detail) ---------- */
+.personnel-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+.personnel-list-item:last-child {
+  border-bottom: none;
+}
+.personnel-list-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+html.dark .personnel-list-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ---------- Risk Badges in Dark Mode ---------- */
+html.dark .badge-low,
+html.dark .risk-tag.badge-low {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+html.dark .badge-medium,
+html.dark .risk-tag.badge-medium {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+html.dark .badge-high,
+html.dark .risk-tag.badge-high {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+}
+
+/* ---------- Back Button ---------- */
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--steel-deep);
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  transition: all 0.15s ease;
+}
+.btn-back:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: var(--ink);
+}
+html.dark .btn-back {
+  background: #131d31;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+}
+html.dark .btn-back:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+/* ---------- Pipeline Stage Badge ---------- */
+.badge-stage {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: #1e293b;
+  color: #ffffff;
+}
+html.dark .badge-stage {
+  background: #1e293b !important;
+  color: #93c5fd !important;
+  border: 1px solid rgba(147, 197, 253, 0.3) !important;
+}
+
+/* ---------- Unit Summary Tile (Admin Units) ---------- */
+.unit-summary-tile {
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+.unit-summary-tile:hover {
+  box-shadow: 0 4px 12px rgba(16, 27, 38, 0.1);
+  transform: translateY(-2px);
+}
+html.dark .unit-summary-tile {
+  background: #0c1527 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html.dark .unit-summary-tile:hover {
+  background: #111e38 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ---------- Officer Response Box ---------- */
+.response-box {
+  background: rgba(76, 122, 94, 0.1);
+  border-left: 3px solid var(--signal-low);
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+html.dark .response-box {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-left-color: var(--signal-low) !important;
+}

@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <title>APPS - Talk to Welfare Officer</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>
+  (function(){
+    var t = localStorage.getItem('apps_theme');
+    if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
 </head>
 <body class="personnel-page">
 <div class="wrap">
@@ -43,7 +51,7 @@
         </p>
         <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); margin:0 0 8px;">{{ r.message }}</p>
         {% if r.remedy %}
-        <div style="background:rgba(76,122,94,0.1); border-left:3px solid var(--signal-low); padding:10px 14px; border-radius:6px;">
+        <div class="response-box">
           <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12px; font-weight:600; color:var(--steel-deep); margin:0 0 4px;">Officer's Response</p>
           <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--ink); margin:0;">{{ r.remedy }}</p>
         </div>

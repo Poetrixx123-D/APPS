@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>APPS - Unit Breakdown</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>
+  (function(){
+    var t = localStorage.getItem('apps_theme');
+    if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
 </head>
 <body class="admin-page">
 <div class="wrap">
@@ -17,10 +25,7 @@
   {% if unit_summary %}
   <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 200px)); gap:12px; margin-top:4px;">
     {% for unit, counts in unit_summary.items() %}
-    <div onclick="window.location='{{ url_for('admin_unit_detail', unit_name=unit) }}'"
-    style="cursor:pointer; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; transition: box-shadow 0.15s ease, transform 0.15s ease;"
-    onmouseover="this.style.boxShadow='0 4px 12px rgba(16,27,38,0.1)'; this.style.transform='translateY(-2px)';"
-    onmouseout="this.style.boxShadow='none'; this.style.transform='none';">
+    <div class="unit-summary-tile" onclick="window.location='{{ url_for('admin_unit_detail', unit_name=unit) }}'">
 
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <strong style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:14px;">{{ unit }}</strong>
