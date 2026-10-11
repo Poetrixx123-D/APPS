@@ -447,6 +447,28 @@ def home():
     return redirect(url_for("login"))
 
 
+WEAK_PASSWORDS = {
+    "123456", "1234567", "12345678", "123456789", "01234567",
+    "password", "password123", "admin123", "qwerty", "qwertyui",
+    "111111", "000000", "11111111", "00000000", "welcome1", "pass1234", "letmein123"
+}
+
+
+def validate_password_strength(password):
+    """Ensure passwords meet security standards (min 8 chars, letters and digits, not blacklisted)."""
+    if not password or len(password) < 8:
+        return False, "Password must be at least 8 characters long."
+    if password.lower() in WEAK_PASSWORDS:
+        return False, "This password is too common and weak. Please choose a stronger password."
+    has_letter = any(c.isalpha() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    if not has_letter or not has_digit:
+        return False, "Password must contain both letters and numbers."
+    if len(set(password)) < 4:
+        return False, "Password has too many repeating characters. Please make it stronger."
+    return True, None
+
+
 def _name_taken(conn, name):
     return conn.execute(
         "SELECT 1 FROM Users WHERE LOWER(TRIM(name)) = LOWER(?)", (name,)
@@ -462,8 +484,10 @@ def _read_signup_form():
         error = "Please enter a name (up to 50 characters)."
     elif len(unit) > 50:
         error = "Unit name is too long (max 50 characters)."
-    elif len(password) < 6:
-        error = "Password must be at least 6 characters."
+    else:
+        is_strong, strength_err = validate_password_strength(password)
+        if not is_strong:
+            error = strength_err
     return name, unit, password, error
 
 
@@ -488,31 +512,33 @@ def signup():
             error = "Please enter a name (up to 50 characters)."
         elif len(unit) > 50:
             error = "Unit/Department name is too long (max 50 characters)."
-        elif len(password) < 6:
-            error = "Password must be at least 6 characters."
         else:
-            conn = get_db()
-            if _name_taken(conn, name):
-                error = "That name is already registered. Please log in or use a different name."
-                conn.close()
+            is_strong, strength_err = validate_password_strength(password)
+            if not is_strong:
+                error = strength_err
             else:
-                assigned_officer = pick_officer(conn) if role == "personnel" else None
-                cur = conn.execute(
-                    "INSERT INTO Users (name, unit, password, role, assigned_officer_id) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (name, unit, generate_password_hash(password), role, assigned_officer)
-                )
-                conn.commit()
-                new_id = cur.lastrowid
-                conn.close()
+                conn = get_db()
+                if _name_taken(conn, name):
+                    error = "That name is already registered. Please log in or use a different name."
+                    conn.close()
+                else:
+                    assigned_officer = pick_officer(conn) if role == "personnel" else None
+                    cur = conn.execute(
+                        "INSERT INTO Users (name, unit, password, role, assigned_officer_id) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (name, unit, generate_password_hash(password), role, assigned_officer)
+                    )
+                    conn.commit()
+                    new_id = cur.lastrowid
+                    conn.close()
 
-                # Automatically log in the user upon registration
-                session.clear()
-                session.permanent = True
-                session["user_id"] = new_id
-                session["user_name"] = name
-                session["role"] = role
-                return redirect(home_for_role(role))
+                    # Automatically log in the user upon registration
+                    session.clear()
+                    session.permanent = True
+                    session["user_id"] = new_id
+                    session["user_name"] = name
+                    session["role"] = role
+                    return redirect(home_for_role(role))
 
     return render_template("signup.html", error=error, active_role=role)
 
@@ -573,6 +599,16 @@ def login():
             if valid_users:
                 _LOGIN_FAILS.pop(key, None)
                 user = valid_users[0]
+
+                # Check if password meets modern security standards
+                is_strong, _ = validate_password_strength(password)
+                if not is_strong:
+                    session.clear()
+                    session["pending_upgrade_user_id"] = user["id"]
+                    session["pending_upgrade_user_name"] = user["name"]
+                    session["pending_upgrade_user_role"] = user["role"]
+                    return redirect(url_for("upgrade_password"))
+
                 session.clear()
                 session.permanent = True
                 session["user_id"] = user["id"]
@@ -584,6 +620,48 @@ def login():
                 error = "Invalid name or password. Please try again."
 
     return render_template("login.html", error=error)
+
+
+@app.route("/upgrade_password", methods=["GET", "POST"])
+def upgrade_password():
+    user_id = session.get("pending_upgrade_user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    error = None
+    user_name = session.get("pending_upgrade_user_name", "User")
+    user_role = session.get("pending_upgrade_user_role", "personnel")
+
+    if request.method == "POST":
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not new_password or not confirm_password:
+            error = "Please enter and confirm your new password."
+        elif new_password != confirm_password:
+            error = "New passwords do not match."
+        else:
+            is_strong, strength_err = validate_password_strength(new_password)
+            if not is_strong:
+                error = strength_err
+            else:
+                conn = get_db()
+                conn.execute(
+                    "UPDATE Users SET password = ? WHERE id = ?",
+                    (generate_password_hash(new_password), user_id)
+                )
+                log_activity(conn, user_id, "Security password upgrade completed", user_id)
+                conn.commit()
+                conn.close()
+
+                session.clear()
+                session.permanent = True
+                session["user_id"] = user_id
+                session["user_name"] = user_name
+                session["role"] = user_role
+                return redirect(home_for_role(user_role))
+
+    return render_template("upgrade_password.html", error=error, user_name=user_name)
 
 
 @app.route("/logout")

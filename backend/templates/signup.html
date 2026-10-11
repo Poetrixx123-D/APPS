@@ -57,7 +57,10 @@
         <input type="text" name="unit" id="unitInput" placeholder="e.g. 1st Infantry / Alpha" required>
 
         <label>Password</label>
-        <input type="password" name="password" minlength="6" placeholder="Minimum 6 characters" required>
+        <input type="password" name="password" id="signupPassword" minlength="8" placeholder="Minimum 8 characters (letters & numbers)" required>
+        <div id="pwHelp" style="font-size:12px; color:var(--steel); margin-top:-4px; margin-bottom:14px; line-height:1.4;">
+          🔒 Minimum 8 characters with both letters &amp; numbers (no weak sequences like 123456).
+        </div>
 
         <button type="submit" class="btn" id="submitBtn">Register as Personnel</button>
       </form>
