@@ -40,10 +40,7 @@
   </div>
   {% endif %}
 
-  <div class="grid2">
-
-  <div style="display:flex; flex-direction:column; gap:22px;">
-
+  <div style="max-width: 580px; margin: 24px auto 40px;">
     <div class="card checkin-card fade-in" id="checkin">
       <h3>Today's Check-in</h3>
       <form method="POST" action="/submit_survey">
@@ -62,85 +59,9 @@
         <button type="submit" class="btn">Submit Check-in</button>
       </form>
     </div>
-
-  </div>
-
-  <div class="card snapshot-card fade-in delay-1">
-    <h3>Your Latest Snapshot</h3>
-
-    {% if trend_labels and trend_labels|length > 1 %}
-    <div style="margin-bottom:16px;">
-      <canvas id="personalTrendChart" style="max-height:150px;"></canvas>
-    </div>
-    {% endif %}
-
-    {% if latest %}
-      <span class="result-badge badge-{{ latest.stress_level|lower }}">{{ latest.stress_level }}</span>
-      <p class="snapshot-date">{{ latest.date }}</p>
-      <p class="snapshot-reco">{{ latest.recommendation }}</p>
-    {% else %}
-      <div class="empty-note" style="padding:10px 0;">No check-ins yet. Submit today's first!</div>
-    {% endif %}
-
-        {% if tips %}
-    <div class="tips-box">
-      <p class="tips-title">Quick tips for today</p>
-      <ul class="tips-list">
-        {% for tip in tips %}
-        <li>{{ tip }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-
-    <div class="mini-stats">
-      <div class="mini-stat">
-        <span class="mini-num">{{ history|length }}</span>
-        <span class="mini-lbl">Total check-ins</span>
-      </div>
-      <div class="mini-stat">
-        <span class="mini-num">{{ streak or 0 }}</span>
-        <span class="mini-lbl">Day streak</span>
-      </div>
-    </div>
-
-    <a href="/results" class="view-results-link">View My Results &rarr;</a>
   </div>
 
 </div>
-
-</div>
-
-{% if trend_labels and trend_labels|length > 1 %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script>
-  new Chart(document.getElementById('personalTrendChart'), {
-    type: 'bar',
-    data: {
-      labels: {{ trend_labels|tojson }},
-      datasets: [
-        {
-          label: 'Sleep Hrs',
-          data: {{ trend_sleep|tojson }},
-          backgroundColor: '#4c7a5e',
-          borderRadius: 3
-        },
-        {
-          label: 'Duty Hrs',
-          data: {{ trend_duty|tojson }},
-          backgroundColor: '#9c3d3d',
-          borderRadius: 3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10.5 } } } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-</script>
-{% endif %}
 
 </body>
 </html>

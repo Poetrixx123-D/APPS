@@ -7,3 +7,5 @@ venv/
 ENV/
 .vscode/
 .vercel
+
+.vercel

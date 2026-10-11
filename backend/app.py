@@ -830,6 +830,43 @@ def dashboard():
     )
 
 
+@app.route("/snapshot")
+@role_required("personnel")
+def snapshot():
+    uid = session["user_id"]
+    conn = get_db()
+    history = conn.execute(
+        "SELECT * FROM DailyData WHERE user_id = ? ORDER BY date DESC, id DESC", (uid,)
+    ).fetchall()
+    conn.close()
+
+    latest = history[0] if history else None
+    tips = build_tips(latest) if latest else []
+
+    # Consecutive-day check-in streak
+    streak = 0
+    dates = {row["date"] for row in history}
+    expected = date.today()
+    while expected.isoformat() in dates:
+        streak += 1
+        expected -= timedelta(days=1)
+
+    recent = list(history[:7])
+    recent.reverse()
+
+    return render_template(
+        "snapshot.html",
+        user_name=session["user_name"],
+        history=history,
+        latest=latest,
+        streak=streak,
+        tips=tips,
+        trend_labels=[r["date"] for r in recent],
+        trend_sleep=[r["sleep_hours"] for r in recent],
+        trend_duty=[r["duty_hours"] for r in recent],
+    )
+
+
 @app.route("/results")
 @role_required("personnel")
 def results():

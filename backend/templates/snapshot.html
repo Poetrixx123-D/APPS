@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APPS - Latest Snapshot</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="personnel-page">
+<div class="wrap">
+
+  {% include "_header.html" %}
+
+  <div class="welcome-banner personnel-banner">
+    <div>
+      <h2>Latest Snapshot</h2>
+      <p>Your recent stress indicators, trend analytics, and personalized guidance</p>
+    </div>
+    {% if streak and streak > 1 %}
+    <div class="streak-chip">
+      <span class="streak-num">{{ streak }}</span>
+      <span class="streak-lbl">day streak</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <a href="/dashboard" style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px; background:transparent; color:var(--steel-deep); border:1.5px solid var(--line); border-radius:7px; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:600; font-size:12.5px; letter-spacing:0.02em; text-decoration:none; transition: background 0.2s ease, border-color 0.2s ease;" onmouseover="this.style.background='var(--card)'; this.style.borderColor='var(--steel-deep)';" onmouseout="this.style.background='transparent'; this.style.borderColor='var(--line)';">&larr; Back to Check-in</a>
+  </div>
+
+  <div class="card snapshot-card fade-in">
+    <h3>Your Latest Snapshot</h3>
+
+    {% if trend_labels and trend_labels|length > 1 %}
+    <div style="margin-bottom:20px;">
+      <h4 style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:12px; color:var(--steel); margin:0 0 10px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;">7-Day Sleep &amp; Duty Trend</h4>
+      <canvas id="personalTrendChart" style="max-height:180px;"></canvas>
+    </div>
+    {% endif %}
+
+    {% if latest %}
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+        <span class="result-badge badge-{{ latest.stress_level|lower }}">{{ latest.stress_level }}</span>
+        <span class="snapshot-date" style="margin:0; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel);">Logged on: <strong>{{ latest.date }}</strong></span>
+      </div>
+      <p class="snapshot-reco" style="font-size:14px; line-height:1.5; color:var(--ink); margin-bottom:18px;">{{ latest.recommendation }}</p>
+    {% else %}
+      <div class="empty-note" style="padding:16px 0;">No check-ins recorded yet. Submit today's check-in to generate your snapshot!</div>
+    {% endif %}
+
+    {% if tips %}
+    <div class="tips-box" style="margin-bottom:20px;">
+      <p class="tips-title">Quick tips for today</p>
+      <ul class="tips-list">
+        {% for tip in tips %}
+        <li>{{ tip }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="mini-stats" style="margin-bottom:20px;">
+      <div class="mini-stat">
+        <span class="mini-num">{{ history|length }}</span>
+        <span class="mini-lbl">Total check-ins</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-num">{{ streak or 0 }}</span>
+        <span class="mini-lbl">Day streak</span>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); padding-top:14px; margin-top:8px;">
+      <a href="/results" class="view-results-link">View Full Check-in History &rarr;</a>
+      <a href="/dashboard" class="view-results-link">Submit Today's Check-in &rarr;</a>
+    </div>
+  </div>
+
+</div>
+
+{% if trend_labels and trend_labels|length > 1 %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  new Chart(document.getElementById('personalTrendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ trend_labels|tojson }},
+      datasets: [
+        {
+          label: 'Sleep Hrs',
+          data: {{ trend_sleep|tojson }},
+          backgroundColor: '#4c7a5e',
+          borderRadius: 3
+        },
+        {
+          label: 'Duty Hrs',
+          data: {{ trend_duty|tojson }},
+          backgroundColor: '#9c3d3d',
+          borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10.5 } } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+</script>
+{% endif %}
+
+</body>
+</html>
