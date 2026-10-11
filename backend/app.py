@@ -578,10 +578,10 @@ def _handle_login(expected_role, template_args):
                     role_label = "Welfare Officer" if actual_role == "officer" else "Senior Admin"
                     error = f"This account is registered as a {role_label}. Please use the {role_label} Portal."
                 elif expected_role == "officer":
-                    role_label = "Army Personnel" if actual_role == "personnel" else "Senior Admin"
+                    role_label = "Personnel" if actual_role == "personnel" else "Senior Admin"
                     error = f"Access denied: This account is registered as {role_label}, not a Welfare Officer."
                 elif expected_role == "admin":
-                    role_label = "Army Personnel" if actual_role == "personnel" else "Welfare Officer"
+                    role_label = "Personnel" if actual_role == "personnel" else "Welfare Officer"
                     error = f"Access denied: This account is registered as {role_label}, not a Senior Admin."
             else:
                 record_login_fail(key)
