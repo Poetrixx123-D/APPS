@@ -57,16 +57,21 @@ MODEL_PATH = os.path.join(BASE_DIR, "stress_model.pkl")
 # App setup
 # ----------------------------------------------------------------------
 def _load_secret_key():
-    """Secret key from env var, else from a local file (created once)."""
+    """Secret key from env var, else stable fallback for Vercel / local file."""
     key = os.environ.get("APPS_SECRET_KEY")
     if key:
         return key
+    if os.environ.get("VERCEL"):
+        return "apps-stable-secret-key-prod-2026-welfare"
     if os.path.exists(SECRET_FILE):
         with open(SECRET_FILE, "r") as f:
             return f.read().strip()
     key = secrets.token_hex(32)
-    with open(SECRET_FILE, "w") as f:
-        f.write(key)
+    try:
+        with open(SECRET_FILE, "w") as f:
+            f.write(key)
+    except Exception:
+        pass
     return key
 
 
@@ -332,10 +337,6 @@ def role_required(*roles):
         @wraps(view)
         def wrapper(*args, **kwargs):
             if "user_id" not in session or session.get("role") not in roles:
-                if "officer" in roles and len(roles) == 1:
-                    return redirect(url_for("officer_login"))
-                elif "admin" in roles and len(roles) == 1:
-                    return redirect(url_for("admin_login"))
                 return redirect(url_for("login"))
             return view(*args, **kwargs)
         return wrapper
@@ -570,10 +571,10 @@ def _password_ok(conn, user, entered):
     return False
 
 
-@app.route("/personnel_login", methods=["GET", "POST"])
-@app.route("/officer_login", methods=["GET", "POST"])
-@app.route("/admin_login", methods=["GET", "POST"])
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/personnel_login", methods=["GET", "POST"], endpoint="personnel_login")
+@app.route("/officer_login", methods=["GET", "POST"], endpoint="officer_login")
+@app.route("/admin_login", methods=["GET", "POST"], endpoint="admin_login")
+@app.route("/login", methods=["GET", "POST"], endpoint="login")
 def login():
     if "user_id" in session:
         return redirect(home_for_role(session.get("role")))
