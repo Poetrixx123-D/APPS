@@ -70,9 +70,24 @@
   .p-eng.e-fading i{background:var(--signal-med);}
   .p-eng.e-quiet i{background:var(--signal-high);}
 
+  @media (min-width: 1024px) {
+    .p-toolbar {
+      grid-template-columns: 2.2fr 1.1fr 1.1fr 1.1fr 1.2fr auto !important;
+      align-items: center !important;
+    }
+    .p-toolbar #searchBox {
+      grid-column: 1 / 2 !important;
+      margin-bottom: 0 !important;
+    }
+  }
+
   @media (max-width:760px){
     .p-toolbar{grid-template-columns:1fr 1fr;}
-    .p-reset{grid-column:1 / -1;}
+    .p-toolbar input, .p-toolbar select{
+      font-size: 16px !important;
+      padding: 12px 14px !important;
+    }
+    .p-reset{grid-column:1 / -1; min-height:44px;}
     .p-row{grid-template-columns:46px minmax(0,1fr) auto; gap:12px 14px; padding:14px;}
     .p-stat.s1{grid-row:2; grid-column:2; text-align:left;}
     .p-stat.s2{grid-row:2; grid-column:3; text-align:right;}

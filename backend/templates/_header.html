@@ -11,20 +11,73 @@
 </script>
 
 <header class="top">
-  <div style="display:flex; align-items:center; gap:12px;">
+  <div class="header-left">
     <button type="button" id="navToggle" class="nav-toggle" aria-label="Open menu"
             aria-expanded="false" aria-controls="navDrawer">
       <span></span><span></span><span></span>
     </button>
-    <div class="mark">APPS</div>
+    <a href="{% if role == 'admin' %}/admin_dashboard{% elif role == 'officer' %}/officer/personnel{% else %}/dashboard{% endif %}" class="brand-link">
+      <div class="mark">APPS</div>
+    </a>
   </div>
-  <div style="display:flex; align-items:center; gap:10px;">
+
+  <nav class="desktop-nav" aria-label="Desktop primary navigation">
+  {% if role == 'personnel' %}
+    <a href="/dashboard" class="desk-nav-item {% if p == '/dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="/snapshot" class="desk-nav-item {% if p == '/snapshot' %}active{% endif %}">Daily Snapshot</a>
+    <a href="/talk_to_officer" class="desk-nav-item {% if p == '/talk_to_officer' %}active{% endif %}">Talk to Officer</a>
+    <a href="/results" class="desk-nav-item {% if p == '/results' %}active{% endif %}">My Results</a>
+    <div class="desk-dropdown">
+      <button type="button" class="desk-nav-item desk-drop-btn">
+        <span>Exports</span> <span style="font-size:10px; opacity:0.7;">▼</span>
+      </button>
+      <div class="desk-dropdown-menu">
+        <a href="/my/export_csv">Download CSV</a>
+        <a href="/my/export_pdf">Download PDF</a>
+      </div>
+    </div>
+
+  {% elif role == 'officer' %}
+    <a href="/officer/personnel" class="desk-nav-item {% if p == '/officer/personnel' or p.startswith('/officer/personnel/') %}active{% endif %}">Personnel List</a>
+    <a href="/officer/requests" class="desk-nav-item {% if p == '/officer/requests' %}active{% endif %}">
+      <span>Requests</span>
+      {% if pending_count %}<span class="desk-badge">{{ pending_count }}</span>{% endif %}
+    </a>
+    <a href="/officer/going_quiet" class="desk-nav-item {% if p == '/officer/going_quiet' %}active{% endif %}">Going Quiet</a>
+    <a href="/officer/activity_log" class="desk-nav-item {% if p == '/officer/activity_log' %}active{% endif %}">Activity Log</a>
+    <div class="desk-dropdown">
+      <button type="button" class="desk-nav-item desk-drop-btn">
+        <span>Reports</span> <span style="font-size:10px; opacity:0.7;">▼</span>
+      </button>
+      <div class="desk-dropdown-menu">
+        <a href="/officer/export_excel">Download Excel</a>
+        <a href="/officer/export_report">Download PDF</a>
+      </div>
+    </div>
+
+  {% elif role == 'admin' %}
+    <a href="/admin_dashboard" class="desk-nav-item {% if p == '/admin_dashboard' %}active{% endif %}">Overview</a>
+    <a href="/admin/units" class="desk-nav-item {% if p.startswith('/admin/unit') %}active{% endif %}">Unit Breakdown</a>
+    <div class="desk-dropdown">
+      <button type="button" class="desk-nav-item desk-drop-btn">
+        <span>Reports</span> <span style="font-size:10px; opacity:0.7;">▼</span>
+      </button>
+      <div class="desk-dropdown-menu">
+        <a href="/admin/export_excel">Download Excel</a>
+        <a href="/admin/export_report">Download PDF</a>
+      </div>
+    </div>
+  {% endif %}
+  </nav>
+
+  <div class="header-right">
     <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
       <span class="theme-toggle-icon">🌙</span>
     </button>
     <span class="role-pill">
-      {{ session.get('user_name') }}{% if role == 'officer' %} (Officer){% elif role == 'admin' %} (Senior Admin){% endif %}
+      {{ session.get('user_name') }}{% if role == 'officer' %} (Officer){% elif role == 'admin' %} (Admin){% endif %}
     </span>
+    <a href="/logout" class="desktop-logout" title="Sign out of APPS">Logout</a>
   </div>
 </header>
 
