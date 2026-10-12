@@ -23,7 +23,7 @@
 
   <div class="card">
   {% if unit_summary %}
-  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 200px)); gap:12px; margin-top:4px;">
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:12px; margin-top:4px;">
     {% for unit, counts in unit_summary.items() %}
     <div class="unit-summary-tile" onclick="window.location='{{ url_for('admin_unit_detail', unit_name=unit) }}'">
 

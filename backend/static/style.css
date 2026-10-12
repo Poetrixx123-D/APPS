@@ -2298,3 +2298,276 @@ html.dark .role-chip-link:hover {
   border-color: #3b82f6;
   color: #60a5fa;
 }
+
+/* ======================================================================
+   MOBILE & TABLET RESPONSIVE ENHANCEMENTS
+   ====================================================================== */
+
+/* Base responsiveness */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+img, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Unit risk cards */
+.unit-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* Tablet & Smaller Screens (<= 768px) */
+@media (max-width: 768px) {
+  .wrap {
+    padding: 20px 16px 64px;
+  }
+
+  .auth-shell {
+    flex-direction: column;
+  }
+
+  .auth-brand-panel {
+    padding: 32px 20px 24px;
+    min-height: auto;
+    text-align: center;
+  }
+
+  .auth-brand-panel h1 {
+    font-size: 24px;
+  }
+
+  .auth-brand-panel p {
+    font-size: 13.5px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .auth-brand-panel .brand-mark {
+    margin: 0 auto 12px;
+  }
+
+  .auth-form-panel {
+    padding: 20px 14px 40px;
+  }
+
+  .auth-card {
+    padding: 28px 20px;
+    max-width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+    margin: 20px 0 24px;
+  }
+
+  .stat-card {
+    aspect-ratio: auto !important;
+    min-height: 110px;
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 26px;
+  }
+
+  .unit-risk-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Table horizontal scroll */
+  .card table, .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table.history {
+    min-width: 480px;
+  }
+}
+
+/* Mobile Screens (<= 640px) */
+@media (max-width: 640px) {
+  .wrap {
+    padding: 16px 14px 50px;
+  }
+
+  header.top {
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+
+  header.top .role-pill {
+    max-width: 130px;
+    font-size: 11px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  h2.page-title {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+
+  .card {
+    padding: 18px 14px;
+    border-radius: 12px;
+  }
+
+  .welcome-banner {
+    padding: 20px 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+
+  .welcome-banner h2 {
+    font-size: 20px;
+  }
+
+  .welcome-banner p {
+    font-size: 12.5px;
+  }
+
+  /* Forms & Inputs touch friendly */
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 14px !important;
+    padding: 11px 12px !important;
+  }
+
+  .btn {
+    padding: 12px 18px !important;
+    font-size: 13px !important;
+    touch-action: manipulation;
+  }
+
+  /* Personnel detail item in admin unit detail */
+  .personnel-list-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .personnel-stats-row {
+    width: 100%;
+    justify-content: space-between !important;
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+
+  /* Results entry */
+  .result-entry {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .result-entry .result-badge {
+    align-self: flex-start;
+  }
+
+  /* Sticky button on mobile */
+  #stickyAddNoteBtn {
+    bottom: 24px !important;
+    right: 18px !important;
+    z-index: 99 !important;
+  }
+}
+
+/* Small Mobile Screens (<= 480px) */
+@media (max-width: 480px) {
+  .wrap {
+    padding: 14px 10px 45px;
+  }
+
+  .auth-form-panel {
+    padding: 14px 10px 32px;
+  }
+
+  .auth-card {
+    padding: 20px 14px;
+    border-radius: 12px;
+  }
+
+  .auth-card h1 {
+    font-size: 20px;
+    margin: 4px 0 16px;
+  }
+
+  .role-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+  }
+
+  .role-tab {
+    flex: 1;
+    padding: 8px 4px !important;
+    font-size: 11px !important;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .stat-card {
+    padding: 14px 10px;
+    min-height: 100px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 10px;
+  }
+
+  .stat-hero .stat-value-hero {
+    font-size: 34px;
+  }
+
+  /* Tag forms */
+  .tag-add-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tag-add-form input {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .tag-add-form button {
+    flex-shrink: 0;
+  }
+
+  /* Navigation drawer sizing */
+  .nav-drawer {
+    width: 270px;
+    max-width: 82vw;
+  }
+}

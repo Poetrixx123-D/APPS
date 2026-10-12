@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>APPS - {{ unit_name }} Detail</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <script>
@@ -33,7 +34,7 @@
   {% set med_c = personnel|selectattr('stress_level','equalto','Medium')|list|length %}
   {% set low_c = personnel|selectattr('stress_level','equalto','Low')|list|length %}
 
-  <div class="grid2" style="grid-template-columns: repeat(3, 1fr); margin-bottom:22px;">
+  <div class="unit-risk-grid" style="margin-bottom:22px;">
     <div class="card stat-card-high">
       <h3 style="border:none; margin:0;">High Risk</h3>
       <p class="stat-value" style="color:var(--signal-high);">{{ high_c }}</p>
@@ -64,7 +65,7 @@
           <div style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:11.5px; color:var(--steel);">Last check-in: {{ p.date }}</div>
         </div>
 
-        <div style="display:flex; gap:22px; font-family:'Helvetica Neue', Arial, sans-serif; text-align:center;">
+        <div class="personnel-stats-row" style="display:flex; gap:22px; font-family:'Helvetica Neue', Arial, sans-serif; text-align:center;">
           <div>
             <div style="font-size:13px; font-weight:600; color:var(--ink);">{{ p.sleep_hours }}h</div>
             <div style="font-size:10px; color:var(--steel);">SLEEP</div>
