@@ -1,5 +1,5 @@
 """
-APPS - Army Personnel Psychological Support (Flask backend)
+APPS - AI Predictive Personnel Stress (Welfare and Monitoring System)
 
 Cleaned-up version. Main fixes compared to the old app.py:
   * pick_officer() was defined twice (nested) and always returned None -> fixed

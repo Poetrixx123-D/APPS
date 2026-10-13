@@ -1,7 +1,7 @@
 """
 build_documentation_pdf.py
 Generates a comprehensive, publication-quality technical PDF documentation
-for the APPS (Army Personnel Psychological Support) system.
+for the APPS (AI Predictive Personnel Stress - Welfare and Monitoring System) system.
 """
 
 import os
@@ -45,7 +45,7 @@ class NumberedCanvas(canvas.Canvas):
             # Header
             self.setFont("Helvetica", 8)
             self.setFillColor(colors.HexColor("#475569"))
-            self.drawString(36, page_h - 26, "APPS - Army Personnel Psychological Support | Technical Architecture")
+            self.drawString(36, page_h - 26, "APPS - AI Predictive Personnel Stress | Technical Architecture")
             self.drawRightString(page_w - 36, page_h - 26, "CONFIDENTIAL & PROPRIETARY")
 
             # Header rule
@@ -228,8 +228,8 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
     # =========================================================================
     header_table_data = [
         [
-            Paragraph("<b>APPS</b> &bull; ARMY PERSONNEL PSYCHOLOGICAL SUPPORT", ParagraphStyle('BannerTop', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=c_accent)),
-            Paragraph("SYSTEM ARCHITECTURE & SPECIFICATION", ParagraphStyle('BannerRight', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8, textColor=c_muted, alignment=2))
+            Paragraph("<b>APPS</b> &bull; AI PREDICTIVE PERSONNEL STRESS", ParagraphStyle('BannerTop', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=c_accent)),
+            Paragraph("WELFARE & MONITORING SYSTEM", ParagraphStyle('BannerRight', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=8, textColor=c_muted, alignment=2))
         ]
     ]
     t_top = Table(header_table_data, colWidths=[320, printable_width - 320])
@@ -250,7 +250,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
 
     meta_data = [
         [
-            Paragraph("<b>Project:</b> Army Personnel Psychological Support (APPS)", table_cell),
+            Paragraph("<b>Project:</b> AI Predictive Personnel Stress (APPS)", table_cell),
             Paragraph("<b>Environment:</b> Vercel Serverless / Cloud Blob", table_cell),
         ],
         [
@@ -283,7 +283,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
     story.append(HRFlowable(width="100%", thickness=1, color=c_primary, spaceBefore=2, spaceAfter=8))
 
     exec_summary_text = (
-        "<b>APPS (Army Personnel Psychological Support)</b> is a full-stack, mission-critical digital psychological "
+        "<b>APPS (AI Predictive Personnel Stress - Welfare and Monitoring System)</b> is a full-stack, mission-critical digital psychological "
         "welfare platform designed to monitor, assess, and support the mental wellbeing of military personnel. "
         "The system incorporates an automated <b>Machine Learning Random Forest classifier</b> to analyze daily physiological "
         "and operational metrics (sleep duration, active duty hours, resting heart rate, and mood score), flagging soldiers experiencing "
