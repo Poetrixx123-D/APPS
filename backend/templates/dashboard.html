@@ -13,7 +13,7 @@
 
   <div class="welcome-banner personnel-banner">
     <div>
-      <h2>{{ greeting }}, {{ user_name }}</h2>
+      <h2><span id="greetingText">{{ greeting }}</span>, {{ user_name }}</h2>
       <p>Today's date: {{ today }}</p>
     </div>
     {% if streak and streak > 1 %}
@@ -63,6 +63,19 @@
   </div>
 
 </div>
+
+<script>
+  (function() {
+    try {
+      var h = new Date().getHours();
+      var g = (h >= 5 && h < 12) ? "Good morning" : (h >= 12 && h < 17) ? "Good afternoon" : "Good evening";
+      var el = document.getElementById("greetingText");
+      if (el) {
+        el.textContent = g;
+      }
+    } catch(e) {}
+  })();
+</script>
 
 </body>
 </html>

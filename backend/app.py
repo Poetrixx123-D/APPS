@@ -20,7 +20,18 @@ import secrets
 import shutil
 import sqlite3
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
+
+# Application Timezone: Indian Standard Time (IST - UTC+05:30)
+TZ_IST = timezone(timedelta(hours=5, minutes=30))
+
+def now_local():
+    """Current datetime in Indian Standard Time (UTC+05:30)."""
+    return datetime.now(TZ_IST)
+
+def today_local():
+    """Current date in Indian Standard Time (UTC+05:30)."""
+    return now_local().date()
 from functools import wraps
 from io import BytesIO, StringIO
 from urllib.parse import urlparse
@@ -923,17 +934,17 @@ def dashboard():
     # Consecutive-day check-in streak
     streak = 0
     dates = {row["date"] for row in history}
-    expected = date.today()
+    expected = today_local()
     while expected.isoformat() in dates:
         streak += 1
         expected -= timedelta(days=1)
     milestone = streak if streak in (7, 14, 30, 60, 100) else None
 
-    today_str = date.today().isoformat()
+    today_str = today_local().isoformat()
     checked_in_today = today_str in dates
 
-    hour = datetime.now().hour
-    greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 17 else "Good evening"
+    hour = now_local().hour
+    greeting = "Good morning" if 5 <= hour < 12 else "Good afternoon" if 12 <= hour < 17 else "Good evening"
 
     # Last 7 check-ins, oldest -> newest, for the personal trend chart
     recent = list(history[:7])
@@ -975,7 +986,7 @@ def snapshot():
     # Consecutive-day check-in streak
     streak = 0
     dates = {row["date"] for row in history}
-    expected = date.today()
+    expected = today_local()
     while expected.isoformat() in dates:
         streak += 1
         expected -= timedelta(days=1)
@@ -1021,7 +1032,7 @@ def submit_survey():
         return redirect(url_for("dashboard"))
 
     level, recommendation = calculate_stress(sleep_hours, duty_hours, heart_rate, mood_score)
-    today = date.today().isoformat()
+    today = today_local().isoformat()
 
     conn = get_db()
     existing = conn.execute(
