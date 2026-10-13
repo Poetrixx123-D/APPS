@@ -740,9 +740,10 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         ],
         [
             Paragraph("<b>Workflow Tracking</b>", table_cell),
-            Paragraph("<b>5-Stage Stress Request Pipeline:</b><br/>"
-                      "Transformed basic requests into a structured triage pipeline: <code>New &rarr; Acknowledged &rarr; In Progress &rarr; Resolved &rarr; Closed</code> with audit timestamps.", table_cell),
-            Paragraph("Provides measurable accountability and transparent status tracking for soldier assistance requests.", table_cell)
+            Paragraph("<b>Universal 5-Stage Stress Request Pipeline:</b><br/>"
+                      "Transformed requests into an omnipresent triage pipeline accessible to all on-duty officers. "
+                      "Requests from all personnel dispatch directly to the Officer Dashboard with real-time pending badges and alert banners.", table_cell),
+            Paragraph("Ensures no personnel message is missed, enabling collaborative review and transparent status tracking.", table_cell)
         ],
         [
             Paragraph("<b>Reporting & Exports</b>", table_cell),

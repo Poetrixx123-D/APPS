@@ -395,9 +395,9 @@ def log_activity(conn, actor_id, action, target_user_id=None, details=""):
 
 def claim_or_check(conn, person_id, officer_id):
     """True if this officer may act on this person.
-    - already theirs -> True
-    - unassigned -> assign to this officer, True
-    - belongs to another officer (or isn't personnel) -> False"""
+    All welfare officers can review and support personnel cases collaboratively.
+    - unassigned -> auto-assign to this officer
+    - assigned -> allow collaborative officer action"""
     row = conn.execute(
         "SELECT assigned_officer_id FROM Users WHERE id = ? AND role = 'personnel'",
         (person_id,)
@@ -412,8 +412,7 @@ def claim_or_check(conn, person_id, officer_id):
         )
         log_activity(conn, officer_id, "Auto-claimed case", person_id)
         conn.commit()
-        return True
-    return owner == officer_id
+    return True
 
 
 def to_int(value):
@@ -525,16 +524,14 @@ def record_login_fail(key):
 
 @app.context_processor
 def inject_nav_counts():
-    """Badge count for the officer's request pipeline link."""
+    """Badge count for the officer's request pipeline link across all personnel."""
     if session.get("role") == "officer":
         conn = get_db()
         try:
             n = conn.execute(
                 """SELECT COUNT(*) FROM StressRequests
                    JOIN Users ON StressRequests.user_id = Users.id
-                   WHERE StressRequests.stage != 'Closed'
-                     AND (Users.assigned_officer_id = ? OR Users.assigned_officer_id IS NULL)""",
-                (session["user_id"],)
+                   WHERE StressRequests.stage != 'Closed'"""
             ).fetchone()[0]
         finally:
             conn.close()
@@ -1086,16 +1083,16 @@ def submit_stress_request():
         return redirect(url_for(back))
 
     conn = get_db()
-    # Only one active request at a time (anything short of Closed is still active)
+    # Only one pending/in-progress request at a time (once Resolved or Closed, personnel can submit a new message)
     existing = conn.execute(
-        "SELECT id FROM StressRequests WHERE user_id = ? AND stage != 'Closed'",
+        "SELECT id FROM StressRequests WHERE user_id = ? AND stage NOT IN ('Resolved', 'Closed')",
         (session["user_id"],)
     ).fetchone()
     if not existing:
         conn.execute(
             """INSERT INTO StressRequests (user_id, message, status, stage, created_date, stage_updated_at)
                VALUES (?, ?, 'Pending', 'New', ?, ?)""",
-            (session["user_id"], message, date.today().isoformat(), datetime.now().isoformat())
+            (session["user_id"], message, today_local().isoformat(), now_local().isoformat())
         )
         conn.commit()
     conn.close()
@@ -1110,7 +1107,7 @@ def officer_dashboard():
     me = session["user_id"]
     conn = get_db()
 
-    # Every personnel's most recent check-in (my caseload + unassigned)
+    # Every personnel's most recent check-in across the unit
     personnel = conn.execute("""
         SELECT Users.id, Users.name, Users.unit, DailyData.date, DailyData.sleep_hours,
                DailyData.duty_hours, DailyData.stress_level, Users.assigned_officer_id
@@ -1118,10 +1115,19 @@ def officer_dashboard():
         JOIN Users ON DailyData.user_id = Users.id
         WHERE DailyData.id IN (SELECT MAX(id) FROM DailyData GROUP BY user_id)
           AND Users.role = 'personnel'
-          AND (Users.assigned_officer_id = ? OR Users.assigned_officer_id IS NULL)
         ORDER BY DailyData.stress_level = 'High' DESC, DailyData.stress_level = 'Medium' DESC,
                  Users.name
-    """, (me,)).fetchall()
+    """).fetchall()
+
+    # Active stress requests across all personnel
+    active_requests = conn.execute("""
+        SELECT StressRequests.*, Users.name AS personnel_name, Users.unit AS personnel_unit
+        FROM StressRequests
+        JOIN Users ON StressRequests.user_id = Users.id
+        WHERE StressRequests.stage != 'Closed'
+        ORDER BY StressRequests.id DESC
+    """).fetchall()
+    pending_requests_count = len(active_requests)
 
     tag_rows = conn.execute("SELECT user_id, tag FROM PersonnelTags ORDER BY id").fetchall()
     tags_by_user = {}
@@ -1132,14 +1138,14 @@ def officer_dashboard():
     # Engagement scoring: who checks in regularly vs has gone quiet
     freq_rows = conn.execute("""
         SELECT user_id, COUNT(*) AS cnt FROM DailyData WHERE date >= ? GROUP BY user_id
-    """, ((date.today() - timedelta(days=13)).isoformat(),)).fetchall()
+    """, ((today_local() - timedelta(days=13)).isoformat(),)).fetchall()
     freq_by_user = {r["user_id"]: r["cnt"] for r in freq_rows}
     conn.close()
 
     scored = []
     for row in personnel:
         p = dict(row)
-        days_since = (date.today() - date.fromisoformat(p["date"])).days
+        days_since = (today_local() - date.fromisoformat(p["date"])).days
         recency_score = max(0, 100 - days_since * 20)
         frequency_score = min(100, round(freq_by_user.get(p["id"], 0) / 14 * 100))
         score = round((recency_score + frequency_score) / 2)
@@ -1164,8 +1170,10 @@ def officer_dashboard():
         high_count=high_count,
         medium_count=medium_count,
         low_count=low_count,
-        today=date.today().isoformat(),
+        today=today_local().isoformat(),
         quiet_list=[p for p in personnel if p["engagement_label"] == "Quiet"],
+        pending_requests_count=pending_requests_count,
+        pending_requests=active_requests[:3],
     )
 
 
@@ -1182,10 +1190,9 @@ def officer_personnel_list():
         JOIN Users ON DailyData.user_id = Users.id
         WHERE DailyData.id IN (SELECT MAX(id) FROM DailyData GROUP BY user_id)
           AND Users.role = 'personnel'
-          AND (Users.assigned_officer_id = ? OR Users.assigned_officer_id IS NULL)
         ORDER BY DailyData.stress_level = 'High' DESC, DailyData.stress_level = 'Medium' DESC,
                  Users.name
-    """, (me,)).fetchall()
+    """).fetchall()
 
     tag_rows = conn.execute("SELECT user_id, tag FROM PersonnelTags ORDER BY id").fetchall()
     tags_by_user = {}
@@ -1195,14 +1202,14 @@ def officer_personnel_list():
 
     freq_rows = conn.execute(
         "SELECT user_id, COUNT(*) AS cnt FROM DailyData WHERE date >= ? GROUP BY user_id",
-        ((date.today() - timedelta(days=13)).isoformat(),)).fetchall()
+        ((today_local() - timedelta(days=13)).isoformat(),)).fetchall()
     freq_by_user = {r["user_id"]: r["cnt"] for r in freq_rows}
     conn.close()
 
     personnel = []
     for row in rows:
         p = dict(row)
-        days_since = (date.today() - date.fromisoformat(p["date"])).days
+        days_since = (today_local() - date.fromisoformat(p["date"])).days
         score = round((max(0, 100 - days_since * 20)
                        + min(100, round(freq_by_user.get(p["id"], 0) / 14 * 100))) / 2)
         p["engagement_label"] = "Engaged" if score >= 70 else "Fading" if score >= 40 else "Quiet"
@@ -1217,16 +1224,15 @@ def officer_personnel_list():
 @app.route("/officer/going_quiet")
 @role_required("officer")
 def officer_going_quiet():
-    """Personnel in my caseload who haven't checked in for a few days (or never)."""
+    """Personnel in the unit who haven't checked in for a few days (or never)."""
     conn = get_db()
     rows = conn.execute("""
         SELECT Users.id, Users.name, MAX(DailyData.date) AS last_date
         FROM Users
         LEFT JOIN DailyData ON DailyData.user_id = Users.id
         WHERE Users.role = 'personnel'
-          AND (Users.assigned_officer_id = ? OR Users.assigned_officer_id IS NULL)
         GROUP BY Users.id
-    """, (session["user_id"],)).fetchall()
+    """).fetchall()
     conn.close()
 
     followups = []
@@ -1234,7 +1240,7 @@ def officer_going_quiet():
         if r["last_date"] is None:
             days = None  # never checked in
         else:
-            days = (date.today() - date.fromisoformat(r["last_date"])).days
+            days = (today_local() - date.fromisoformat(r["last_date"])).days
             if days < QUIET_AFTER_DAYS:
                 continue
         followups.append({"id": r["id"], "name": r["name"], "days": days})
@@ -1266,8 +1272,7 @@ def officer_activity_log():
 def personnel_detail(user_id):
     conn = get_db()
     person = conn.execute("SELECT * FROM Users WHERE id = ?", (user_id,)).fetchone()
-    if (not person or person["role"] != "personnel"
-            or person["assigned_officer_id"] not in (None, session["user_id"])):
+    if not person or person["role"] != "personnel":
         conn.close()
         return redirect(url_for("officer_dashboard"))
 
@@ -1433,15 +1438,13 @@ def release_personnel():
 @role_required("officer")
 def view_stress_requests():
     conn = get_db()
-    active_requests = conn.execute(
-        """SELECT StressRequests.*, Users.name AS personnel_name
-           FROM StressRequests
-           JOIN Users ON StressRequests.user_id = Users.id
-           WHERE StressRequests.stage != 'Closed'
-             AND (Users.assigned_officer_id = ? OR Users.assigned_officer_id IS NULL)
-           ORDER BY StressRequests.id DESC""",
-        (session["user_id"],)
-    ).fetchall()
+    active_requests = conn.execute("""
+        SELECT StressRequests.*, Users.name AS personnel_name, Users.unit AS personnel_unit
+        FROM StressRequests
+        JOIN Users ON StressRequests.user_id = Users.id
+        WHERE StressRequests.stage != 'Closed'
+        ORDER BY StressRequests.id DESC
+    """).fetchall()
     conn.close()
 
     pending_requests = []
@@ -1466,7 +1469,7 @@ def view_stress_requests():
 def advance_stress_request(request_id):
     conn = get_db()
     req = conn.execute("SELECT * FROM StressRequests WHERE id = ?", (request_id,)).fetchone()
-    if not req or not claim_or_check(conn, req["user_id"], session["user_id"]):
+    if not req:
         conn.close()
         return redirect(url_for("view_stress_requests"))
 
@@ -1485,7 +1488,7 @@ def advance_stress_request(request_id):
         if not remedy:
             conn.close()
             return redirect(url_for("view_stress_requests"))
-        resolved_date = date.today().isoformat()
+        resolved_date = today_local().isoformat()
 
     status = "Resolved" if expected_next in ("Resolved", "Closed") else "Pending"
     conn.execute(
@@ -1493,7 +1496,7 @@ def advance_stress_request(request_id):
            SET stage = ?, stage_updated_at = ?, officer_id = ?, remedy = ?,
                resolved_date = ?, status = ?
            WHERE id = ?""",
-        (expected_next, datetime.now().isoformat(), session["user_id"],
+        (expected_next, now_local().isoformat(), session["user_id"],
          remedy, resolved_date, status, request_id)
     )
     log_activity(conn, session["user_id"], f"Moved request to '{expected_next}'", req["user_id"])
@@ -1666,7 +1669,7 @@ def _autosize(ws):
         ws.column_dimensions[col[0].column_letter].width = min(longest, 60) + 4
 
 
-def _officer_roster(conn, officer_id):
+def _officer_roster(conn, officer_id=None):
     return conn.execute("""
         SELECT Users.name, Users.unit, DailyData.date, DailyData.sleep_hours,
                DailyData.duty_hours, DailyData.stress_level
@@ -1674,10 +1677,9 @@ def _officer_roster(conn, officer_id):
         JOIN Users ON DailyData.user_id = Users.id
         WHERE DailyData.id IN (SELECT MAX(id) FROM DailyData GROUP BY user_id)
           AND Users.role = 'personnel'
-          AND (Users.assigned_officer_id = ? OR Users.assigned_officer_id IS NULL)
         ORDER BY DailyData.stress_level = 'High' DESC, DailyData.stress_level = 'Medium' DESC,
                  Users.name
-    """, (officer_id,)).fetchall()
+    """).fetchall()
 
 
 @app.route("/admin/export_report")
