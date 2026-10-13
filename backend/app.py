@@ -40,17 +40,119 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+orig_db = os.path.join(BASE_DIR, "apps.db")
 if os.environ.get("VERCEL"):
     TMP_DIR = "/tmp"
     DB_PATH = os.path.join(TMP_DIR, "apps.db")
     SECRET_FILE = os.path.join(TMP_DIR, ".secret_key")
-    orig_db = os.path.join(BASE_DIR, "apps.db")
-    if not os.path.exists(DB_PATH) and os.path.exists(orig_db):
-        shutil.copyfile(orig_db, DB_PATH)
 else:
     DB_PATH = os.path.join(BASE_DIR, "apps.db")
     SECRET_FILE = os.path.join(BASE_DIR, ".secret_key")
 MODEL_PATH = os.path.join(BASE_DIR, "stress_model.pkl")
+
+# ----------------------------------------------------------------------
+# Vercel Blob Persistence
+# ----------------------------------------------------------------------
+_last_blob_sync_time = 0
+
+def _get_blob_token():
+    token = os.environ.get("BLOB_READ_WRITE_TOKEN")
+    if not token:
+        env_file = os.path.join(os.path.dirname(BASE_DIR), ".env.local")
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith("BLOB_READ_WRITE_TOKEN="):
+                            return line.split("=", 1)[1].strip("\"'")
+            except Exception:
+                pass
+    return token
+
+
+def sync_db_from_blob(force=False):
+    """Download latest apps.db from Vercel Blob into DB_PATH if available."""
+    global _last_blob_sync_time
+    now = time.time()
+    if not force and os.path.exists(DB_PATH) and (now - _last_blob_sync_time < 30):
+        return False
+
+    token = _get_blob_token()
+    if not token:
+        if os.environ.get("VERCEL") and not os.path.exists(DB_PATH) and os.path.exists(orig_db):
+            shutil.copyfile(orig_db, DB_PATH)
+        return False
+
+    try:
+        from urllib.request import Request, urlopen
+        import json
+
+        list_url = "https://blob.vercel-storage.com/?prefix=apps.db"
+        req = Request(list_url)
+        req.add_header("Authorization", f"Bearer {token}")
+        with urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            blobs = data.get("blobs", [])
+            blob_entry = next((b for b in blobs if b.get("pathname") == "apps.db"), None)
+
+        if not blob_entry:
+            if os.path.exists(orig_db) and not os.path.exists(DB_PATH):
+                shutil.copyfile(orig_db, DB_PATH)
+            sync_db_to_blob()
+            _last_blob_sync_time = now
+            return True
+
+        download_url = blob_entry.get("downloadUrl") or blob_entry.get("url")
+        get_req = Request(download_url)
+        get_req.add_header("Authorization", f"Bearer {token}")
+        with urlopen(get_req, timeout=15) as resp:
+            content = resp.read()
+            if content and len(content) > 100:
+                tmp_target = DB_PATH + ".download"
+                with open(tmp_target, "wb") as f:
+                    f.write(content)
+                if os.path.exists(DB_PATH):
+                    try:
+                        os.remove(DB_PATH)
+                    except Exception:
+                        pass
+                os.replace(tmp_target, DB_PATH)
+                _last_blob_sync_time = now
+                print(f"[Blob Sync] Restored apps.db from Vercel Blob ({len(content)} bytes)")
+                return True
+    except Exception as e:
+        print(f"[Blob Sync] Error syncing DB from blob: {e}")
+        if os.environ.get("VERCEL") and not os.path.exists(DB_PATH) and os.path.exists(orig_db):
+            shutil.copyfile(orig_db, DB_PATH)
+    return False
+
+
+def sync_db_to_blob():
+    """Upload DB_PATH to Vercel Blob so updates survive container recycles."""
+    token = _get_blob_token()
+    if not token or not os.path.exists(DB_PATH):
+        return False
+
+    try:
+        from urllib.request import Request, urlopen
+        with open(DB_PATH, "rb") as f:
+            data = f.read()
+
+        url = "https://blob.vercel-storage.com/apps.db"
+        req = Request(url, data=data, method="PUT")
+        req.add_header("Authorization", f"Bearer {token}")
+        req.add_header("x-add-random-suffix", "0")
+        req.add_header("x-allow-overwrite", "1")
+        req.add_header("x-vercel-blob-access", "private")
+
+        with urlopen(req, timeout=15) as resp:
+            if resp.status in (200, 201):
+                print(f"[Blob Sync] Saved apps.db to Vercel Blob ({len(data)} bytes)")
+                return True
+    except Exception as e:
+        print(f"[Blob Sync] Error syncing DB to blob: {e}")
+    return False
 
 
 # ----------------------------------------------------------------------
@@ -91,8 +193,14 @@ FEATURE_COLUMNS = ["sleep_hours", "duty_hours", "heart_rate", "mood_score"]
 # ----------------------------------------------------------------------
 # Database
 # ----------------------------------------------------------------------
+class SyncedConnection(sqlite3.Connection):
+    def commit(self):
+        super().commit()
+        sync_db_to_blob()
+
+
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, factory=SyncedConnection)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -122,6 +230,10 @@ def _seed_codes(c, table, prefix, count):
 
 
 def init_db():
+    if os.environ.get("VERCEL") or _get_blob_token():
+        sync_db_from_blob()
+    elif not os.path.exists(DB_PATH) and os.path.exists(orig_db):
+        shutil.copyfile(orig_db, DB_PATH)
     conn = get_db()
     c = conn.cursor()
 
@@ -590,6 +702,7 @@ def login():
         elif not name or not password:
             error = "Please enter both your name and password."
         else:
+            sync_db_from_blob(force=True)
             conn = get_db()
             candidates = conn.execute(
                 "SELECT * FROM Users WHERE LOWER(TRIM(name)) = LOWER(?) ORDER BY id", (name,)
@@ -646,6 +759,7 @@ def upgrade_password():
             if not is_strong:
                 error = strength_err
             else:
+                sync_db_from_blob(force=True)
                 conn = get_db()
                 conn.execute(
                     "UPDATE Users SET password = ? WHERE id = ?",
@@ -654,6 +768,7 @@ def upgrade_password():
                 log_activity(conn, user_id, "Security password upgrade completed", user_id)
                 conn.commit()
                 conn.close()
+                sync_db_to_blob()
 
                 session.clear()
                 session.permanent = True
