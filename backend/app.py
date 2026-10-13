@@ -788,6 +788,69 @@ def upgrade_password():
     return render_template("upgrade_password.html", error=error, user_name=user_name)
 
 
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if "user_id" in session:
+        return redirect(home_for_role(session.get("role")))
+
+    error = None
+    role = request.args.get("role", "personnel")
+    name = ""
+    unit = ""
+
+    if request.method == "POST":
+        role = request.form.get("role", "personnel").strip()
+        name = request.form.get("name", "").strip()
+        unit = request.form.get("unit", "").strip()
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        key = f"reset_{name.lower()}_{request.remote_addr}"
+        if login_locked(key):
+            error = "Too many failed attempts. Please wait a few minutes and try again."
+        elif not name or not unit or not new_password or not confirm_password:
+            error = "Please fill in all required fields."
+        elif new_password != confirm_password:
+            error = "New passwords do not match."
+        else:
+            is_strong, strength_err = validate_password_strength(new_password)
+            if not is_strong:
+                error = strength_err
+            else:
+                sync_db_from_blob(force=True)
+                conn = get_db()
+                candidates = conn.execute(
+                    "SELECT * FROM Users WHERE LOWER(TRIM(name)) = LOWER(?) AND role = ? ORDER BY id",
+                    (name, role)
+                ).fetchall()
+
+                matched_user = None
+                for u in candidates:
+                    user_unit = (u["unit"] or "").strip().lower()
+                    if user_unit == unit.strip().lower():
+                        matched_user = u
+                        break
+
+                if not matched_user:
+                    record_login_fail(key)
+                    error = f"No matching {role.capitalize()} account found for '{name}' with unit '{unit}'. Please verify your registered details."
+                    conn.close()
+                else:
+                    _LOGIN_FAILS.pop(key, None)
+                    conn.execute(
+                        "UPDATE Users SET password = ? WHERE id = ?",
+                        (generate_password_hash(new_password), matched_user["id"])
+                    )
+                    log_activity(conn, matched_user["id"], "Password reset via Forgot Password", matched_user["id"])
+                    conn.commit()
+                    conn.close()
+                    sync_db_to_blob()
+
+                    return redirect(url_for("login", reset="success", name=name))
+
+    return render_template("forgot_password.html", error=error, active_role=role, name=name, unit=unit)
+
+
 @app.route("/logout")
 def logout():
     session.clear()

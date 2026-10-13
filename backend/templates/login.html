@@ -36,15 +36,24 @@
       <h1>Sign In to APPS</h1>
       <p class="sub">Enter your registered name and password to access your dashboard.</p>
 
+      {% if request.args.get('reset') == 'success' %}
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; font-size:13px; font-weight:600; padding:12px 14px; border-radius:var(--radius-sm); margin-bottom:18px; line-height:1.4;">
+          ✓ Password has been reset successfully! Please sign in with your new password.
+        </div>
+      {% endif %}
+
       {% if error %}
         <div class="error-box">{{ error }}</div>
       {% endif %}
 
       <form method="POST" action="/login">
         <label>Name</label>
-        <input type="text" name="name" placeholder="Enter your registered name" required autofocus>
+        <input type="text" name="name" value="{{ request.args.get('name', '') }}" placeholder="Enter your registered name" required autofocus>
 
-        <label>Password</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="margin-bottom:0;">Password</label>
+          <a href="/forgot_password" style="font-size:12px; color:var(--moss); font-weight:600; text-decoration:none;">Forgot Password?</a>
+        </div>
         <input type="password" name="password" placeholder="Enter your password" required>
 
         <button type="submit" class="btn">Sign In to Dashboard &rarr;</button>
