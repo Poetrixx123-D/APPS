@@ -35,6 +35,7 @@ class NumberedCanvas(canvas.Canvas):
             self.draw_page_decorations(num_pages)
             super().showPage()
         super().save()
+        print(f"Total pages rendered: {num_pages}")
 
     def draw_page_decorations(self, page_count):
         self.saveState()
@@ -263,7 +264,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         ],
         [
             Paragraph("<b>Live URL:</b> https://apps-nu-henna.vercel.app", table_cell),
-            Paragraph("<b>Generated:</b> October 2026 | Version 2.0", table_cell),
+            Paragraph("<b>Generated:</b> October 2026 | Version 2.2 (Continuous Sync)", table_cell),
         ]
     ]
     t_meta = Table(meta_data, colWidths=[printable_width * 0.5, printable_width * 0.5])
@@ -403,6 +404,11 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
             Paragraph("Mandatory password upgrade screen for users with legacy/weak passwords. Enforces minimum length and complexity.", table_cell)
         ],
         [
+            Paragraph("<code>forgot_password.html</code>", code_style),
+            Paragraph("<code>/forgot_password</code>", code_style),
+            Paragraph("Self-service credential recovery portal. Role switcher (Personnel/Officer/Admin), Registered Unit verification, and dynamic strength meter.", table_cell)
+        ],
+        [
             Paragraph("<code>dashboard.html</code>", code_style),
             Paragraph("<code>/dashboard</code>", code_style),
             Paragraph("Personnel daily portal. Daily wellness survey input, 7-day health trend chart, recent check-in history, quick stress relief button.", table_cell)
@@ -491,6 +497,9 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         "Unauthorized requests are redirected to role-specific login routes with contextual flash error notices.<br/>"
         "&bull; <b>Automated Officer Load Balancer (<code>pick_officer</code>):</b> When a new soldier signs up, the system executes an atomic subquery calculating the active caseload "
         "of all registered officers and assigns the soldier to the officer with the lowest workload, ensuring fair distribution across medical staff.<br/>"
+        "&bull; <b>Universal Officer Request Pipeline:</b> Cross-unit routing guarantees that all stress relief requests dispatched by any soldier are surfaced on the Welfare Officer console, preventing dropped communications.<br/>"
+        "&bull; <b>Timezone Localization & Device Synchronization:</b> Backend operations strictly adhere to Indian Standard Time (<code>UTC+05:30</code>) "
+        "via <code>now_local()</code> and <code>today_local()</code>, paired with client-side dynamic device clock synchronization for accurate temporal greetings.<br/>"
         "&bull; <b>CSRF & Same-Origin Enforcement:</b> All state-mutating POST requests undergo header origin checks verifying the request origin matches the host domain.<br/>"
         "&bull; <b>Rate Limiting & Brute-Force Backoff:</b> Failed login attempts are throttled to prevent credential stuffing attacks.<br/>"
         "&bull; <b>Formula & CSV Injection Defense:</b> When generating Excel and CSV exports, strings prefixed with arithmetic characters (<code>=, +, -, @</code>) "
@@ -504,6 +513,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
     routes_data = [
         [Paragraph("<b>Route Path</b>", table_header), Paragraph("<b>HTTP</b>", table_header), Paragraph("<b>Role</b>", table_header), Paragraph("<b>Functionality & Behavior</b>", table_header)],
         [Paragraph("<code>/login</code>", code_style), Paragraph("GET/POST", table_cell), Paragraph("Public", badge_pill), Paragraph("Authenticates users, checks password strength; redirects to upgrade or dashboard.", table_cell)],
+        [Paragraph("<code>/forgot_password</code>", code_style), Paragraph("GET/POST", table_cell), Paragraph("Public", badge_pill), Paragraph("Identity recovery via Name + Unit + Role match; sets strong password & syncs to cloud.", table_cell)],
         [Paragraph("<code>/signup</code>", code_style), Paragraph("GET/POST", table_cell), Paragraph("Public", badge_pill), Paragraph("Creates soldier account; enforces strong password; calls pick_officer().", table_cell)],
         [Paragraph("<code>/officer_signup</code>", code_style), Paragraph("GET/POST", table_cell), Paragraph("Public", badge_pill), Paragraph("Validates and consumes single-use OFC-* code; creates officer account.", table_cell)],
         [Paragraph("<code>/admin_signup</code>", code_style), Paragraph("GET/POST", table_cell), Paragraph("Public", badge_pill), Paragraph("Validates and consumes single-use ADM-* code; creates admin account.", table_cell)],
@@ -610,7 +620,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [
             Paragraph("<code>Users</code>", code_style),
             Paragraph("<code>id (PK), name, unit, password, role, assigned_officer_id (FK)</code>", code_style),
-            Paragraph("Stores personnel credentials (PBKDF2 hashes), regiment/unit, assigned role, and linked welfare officer.", table_cell)
+            Paragraph("Stores personnel credentials (scrypt/PBKDF2 hashes), unit/station, assigned role, and linked officer. Supports weak password intercept and unit-verified forgot password recovery.", table_cell)
         ],
         [
             Paragraph("<code>DailyData</code>", code_style),
@@ -702,16 +712,38 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [Paragraph("<b>Category</b>", table_header), Paragraph("<b>Enhancement / Feature Added</b>", table_header), Paragraph("<b>Impact & Operational Benefit</b>", table_header)],
         [
             Paragraph("<b>Security & Auth</b>", table_cell),
+            Paragraph("<b>Self-Service Forgot Password & Recovery Engine:</b><br/>"
+                      "Engineered dedicated <code>/forgot_password</code> portal with role selector (Personnel/Officer/Admin). "
+                      "Verifies user identity via Registered Name, Unit, and Role without external email dependencies. "
+                      "Features real-time client-side password strength validation and automatic cloud sync.", table_cell),
+            Paragraph("Enables users to safely recover locked accounts instantly without administrator intervention while preserving high security standards.", table_cell)
+        ],
+        [
+            Paragraph("<b>Security & Auth</b>", table_cell),
             Paragraph("<b>Weak Password Policy & Forced Upgrade Flow:</b><br/>"
-                      "Enforced minimum 6-character length and complexity rules. Banned trivial passwords (<code>123</code>, <code>123456</code>, <code>password</code>). "
+                      "Enforced minimum 8-character length and complexity rules. Banned trivial passwords (<code>123</code>, <code>123456</code>, <code>password</code>). "
                       "Built mandatory <code>/upgrade_password</code> route that intercepts existing users with legacy passwords upon login.", table_cell),
-            Paragraph("Completely eliminated vulnerabilities from default weak credentials; upgraded existing user accounts securely to PBKDF2 hashes.", table_cell)
+            Paragraph("Completely eliminated vulnerabilities from default weak credentials; upgraded existing user accounts securely to scrypt hashes.", table_cell)
         ],
         [
             Paragraph("<b>Data Persistence</b>", table_cell),
             Paragraph("<b>Vercel Blob Storage Integration:</b><br/>"
                       "Provisioned private store <code>apps-data</code>, configured access tokens, built <code>SyncedConnection</code> and automatic two-way synchronization in <code>app.py</code>.", table_cell),
             Paragraph("Resolved the serverless container reset bug where password updates disappeared after overnight cold restarts.", table_cell)
+        ],
+        [
+            Paragraph("<b>Workflow & Triage</b>", table_cell),
+            Paragraph("<b>Universal 5-Stage Stress Request Pipeline:</b><br/>"
+                      "Transformed requests into an omnipresent triage pipeline accessible to all on-duty officers. "
+                      "Requests from all personnel dispatch directly to the Officer Dashboard with real-time pending badges and alert banners.", table_cell),
+            Paragraph("Ensures no personnel message is missed, enabling collaborative review and transparent status tracking across officers.", table_cell)
+        ],
+        [
+            Paragraph("<b>Timezone & Clock</b>", table_cell),
+            Paragraph("<b>Indian Standard Time (IST) & Dynamic Device Greeting:</b><br/>"
+                      "Standardized backend datetime calculations to IST (<code>UTC+05:30</code>) via <code>now_local()</code>. "
+                      "Paired with client-side JavaScript dynamic clock synchronization for accurate morning, afternoon, and evening greetings.", table_cell),
+            Paragraph("Eliminates UTC time-drift errors on check-ins and aligns dashboard greetings with the soldier's actual physical hour of day.", table_cell)
         ],
         [
             Paragraph("<b>Responsive Design</b>", table_cell),
@@ -721,10 +753,11 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
             Paragraph("Seamless user experience across smartphones, iPads/tablets, and high-resolution laptop monitors.", table_cell)
         ],
         [
-            Paragraph("<b>User Experience</b>", table_cell),
-            Paragraph("<b>Single Portal & Dedicated Signup Pathways:</b><br/>"
-                      "Streamlined entry page (<code>/portal</code> &amp; <code>/login</code>) with clear role cards and explicit, visible signup links for new Officers and Admins.", table_cell),
-            Paragraph("Eliminated user confusion regarding how new officers and administrators can register with their authorized access codes.", table_cell)
+            Paragraph("<b>System Brand</b>", table_cell),
+            Paragraph("<b>Official Full Form & Platform Rebranding:</b><br/>"
+                      "Formally established and propagated the project definition: <b>AI Predictive Personnel Stress (Welfare and Monitoring System)</b> "
+                      "across all portal headers, login branding, technical architecture docstrings, and generated physical dossiers.", table_cell),
+            Paragraph("Establishes unified institutional identity and professional clarity across clinical and administrative tiers.", table_cell)
         ],
         [
             Paragraph("<b>Officer Dashboard</b>", table_cell),
@@ -739,17 +772,10 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
             Paragraph("Enables welfare officers to proactively reach out to at-risk soldiers before mental distress escalates unnoticed.", table_cell)
         ],
         [
-            Paragraph("<b>Workflow Tracking</b>", table_cell),
-            Paragraph("<b>Universal 5-Stage Stress Request Pipeline:</b><br/>"
-                      "Transformed requests into an omnipresent triage pipeline accessible to all on-duty officers. "
-                      "Requests from all personnel dispatch directly to the Officer Dashboard with real-time pending badges and alert banners.", table_cell),
-            Paragraph("Ensures no personnel message is missed, enabling collaborative review and transparent status tracking.", table_cell)
-        ],
-        [
             Paragraph("<b>Reporting & Exports</b>", table_cell),
-            Paragraph("<b>Multi-Format Data Exports (PDF / Excel / CSV):</b><br/>"
-                      "Integrated ReportLab PDF generation, OpenPyXL spreadsheet generation with formula injection protection, and telemetry CSV downloads.", table_cell),
-            Paragraph("Enables senior officers and medical boards to produce official physical dossiers and command briefing sheets.", table_cell)
+            Paragraph("<b>Sanitized Multi-Format Exports (Prioritized PDF Dossiers):</b><br/>"
+                      "Prioritized official ReportLab PDF clinical dossiers on soldier dashboard while retaining comprehensive administrative Excel and CSV exports for commanders.", table_cell),
+            Paragraph("Eliminates raw CSV clutter on soldier views while enabling senior officers and medical boards to produce official physical dossiers.", table_cell)
         ],
     ]
     t_feat = Table(features_added_data, colWidths=[90, 240, printable_width - 330], repeatRows=1)
@@ -777,6 +803,8 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [Paragraph("<b>Hosting Platform</b>", table_cell), Paragraph("Vercel Serverless Platform (Node.js/Python WSGI Bridge)", table_cell)],
         [Paragraph("<b>Object Storage Store</b>", table_cell), Paragraph("Vercel Blob Storage &bull; Store: <code>apps-data</code> (ID: <code>store_eS9r7map43Dx32yX</code>)", table_cell)],
         [Paragraph("<b>Source Control</b>", table_cell), Paragraph("Git (Dual-tracked: <code>origin/main</code> and <code>origin/master</code>)", table_cell)],
+        [Paragraph("<b>Credential Recovery</b>", table_cell), Paragraph("Unit-verified self-service recovery (<code>/forgot_password</code>) active in production", table_cell)],
+        [Paragraph("<b>Timezone Standard</b>", table_cell), Paragraph("Indian Standard Time (IST - <code>UTC+05:30</code>) with dynamic client clock sync", table_cell)],
         [Paragraph("<b>Secret Key Management</b>", table_cell), Paragraph("Environment-backed session secret key with stable production fallback", table_cell)],
         [Paragraph("<b>Database Verification</b>", table_cell), Paragraph("Verified live: User 'Dharun' upgraded to strong password, persistent across cold boots", table_cell)],
     ]
