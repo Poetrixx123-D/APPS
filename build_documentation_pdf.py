@@ -711,6 +711,14 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
     features_added_data = [
         [Paragraph("<b>Category</b>", table_header), Paragraph("<b>Enhancement / Feature Added</b>", table_header), Paragraph("<b>Impact & Operational Benefit</b>", table_header)],
         [
+            Paragraph("<b>Login Reliability</b>", table_cell),
+            Paragraph("<b>Login Diagnostics & Whitespace Resilience:</b><br/>"
+                      "Engineered intelligent authentication diagnostics distinguishing unregistered accounts from password mismatches. "
+                      "Provides 1-click action buttons (<code>[Register Account]</code> or <code>[Reset Password]</code>). "
+                      "Added mobile trailing-space tolerance in password hashing and interactive visibility eye toggles (👁️) across all forms.", table_cell),
+            Paragraph("Completely prevents false 'Invalid credentials' rejections caused by mobile keyboard autofill or user uncertainty.", table_cell)
+        ],
+        [
             Paragraph("<b>Security & Auth</b>", table_cell),
             Paragraph("<b>Self-Service Forgot Password & Recovery Engine:</b><br/>"
                       "Engineered dedicated <code>/forgot_password</code> portal with role selector (Personnel/Officer/Admin). "

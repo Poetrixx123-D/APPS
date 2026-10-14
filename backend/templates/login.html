@@ -43,18 +43,37 @@
       {% endif %}
 
       {% if error %}
-        <div class="error-box">{{ error }}</div>
+        <div class="error-box" style="line-height:1.45; text-align:left;">
+          {% if error is mapping %}
+            <div style="font-weight:700; font-size:13.5px; margin-bottom:5px; color:var(--signal-high);">{{ error.title }}</div>
+            <div style="font-size:12.5px; margin-bottom:12px; color:var(--steel);">{{ error.message }}</div>
+            {% if error.action_url %}
+              <div style="margin-top:8px;">
+                <a href="{{ error.action_url }}" class="btn" style="display:inline-block; padding:8px 16px; font-size:12px; font-weight:600; text-decoration:none; width:auto; border-radius:6px; box-shadow:none;">
+                  {{ error.action_text|safe }}
+                </a>
+              </div>
+            {% endif %}
+          {% else %}
+            {{ error }}
+          {% endif %}
+        </div>
       {% endif %}
 
       <form method="POST" action="/login">
         <label>Name</label>
-        <input type="text" name="name" value="{{ request.args.get('name', '') }}" placeholder="Enter your registered name" required autofocus>
+        <input type="text" name="name" value="{{ entered_name or request.args.get('name', '') }}" placeholder="Enter your registered name" required autofocus>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
           <label style="margin-bottom:0;">Password</label>
           <a href="/forgot_password" style="font-size:12px; color:var(--moss); font-weight:600; text-decoration:none;">Forgot Password?</a>
         </div>
-        <input type="password" name="password" placeholder="Enter your password" required>
+        <div style="position:relative;">
+          <input type="password" name="password" id="loginPassword" placeholder="Enter your password" required style="padding-right:42px;">
+          <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Toggle password visibility" title="Show / Hide Password" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; padding:4px; color:var(--steel); line-height:1;">
+            👁️
+          </button>
+        </div>
 
         <button type="submit" class="btn">Sign In to Dashboard &rarr;</button>
       </form>
@@ -74,6 +93,20 @@
 </div>
 
 <script>
+  function togglePasswordVisibility(id, btn) {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      btn.textContent = '🙈';
+      btn.title = 'Hide Password';
+    } else {
+      inp.type = 'password';
+      btn.textContent = '👁️';
+      btn.title = 'Show Password';
+    }
+  }
+
   (function(){
     function updateIcons(dark) {
       document.querySelectorAll('.theme-toggle-icon').forEach(function(i){ i.textContent = dark ? '☀️' : '🌙'; });

@@ -211,6 +211,8 @@ class SyncedConnection(sqlite3.Connection):
 
 
 def get_db():
+    if os.environ.get("VERCEL") or _get_blob_token():
+        sync_db_from_blob()
     conn = sqlite3.connect(DB_PATH, factory=SyncedConnection)
     conn.row_factory = sqlite3.Row
     return conn
@@ -622,6 +624,7 @@ def signup():
         role = "personnel"
 
     if request.method == "POST":
+        sync_db_from_blob(force=True)
         name = request.form.get("name", "").strip()
         unit = request.form.get("unit", "").strip()
         password = request.form.get("password", "")
@@ -652,6 +655,7 @@ def signup():
                     conn.commit()
                     new_id = cur.lastrowid
                     conn.close()
+                    sync_db_to_blob()
 
                     # Automatically log in the user upon registration
                     session.clear()
@@ -661,7 +665,7 @@ def signup():
                     session["role"] = role
                     return redirect(home_for_role(role))
 
-    return render_template("signup.html", error=error, active_role=role)
+    return render_template("signup.html", error=error, active_role=role, name=request.args.get("name", ""))
 
 
 @app.route("/officer_signup", methods=["GET", "POST"])
@@ -681,11 +685,20 @@ def admin_signup():
 def _password_ok(conn, user, entered):
     """Check a password. Old plain-text passwords still work and are upgraded."""
     stored = user["password"] or ""
+    cand = entered.strip()
     if stored.startswith(("pbkdf2:", "scrypt:")):
-        return check_password_hash(stored, entered)
-    if secrets.compare_digest(stored.encode(), entered.encode()):
+        if check_password_hash(stored, entered):
+            return True
+        if check_password_hash(stored, cand):
+            return True
+        if check_password_hash(stored, cand + " "):
+            return True
+        return False
+    stored_strip = stored.strip()
+    if (secrets.compare_digest(stored.encode(), entered.encode()) or
+        secrets.compare_digest(stored_strip.encode(), cand.encode())):
         conn.execute("UPDATE Users SET password = ? WHERE id = ?",
-                     (generate_password_hash(entered), user["id"]))
+                     (generate_password_hash(cand), user["id"]))
         conn.commit()
         return True
     return False
@@ -700,6 +713,7 @@ def login():
         return redirect(home_for_role(session.get("role")))
 
     error = None
+    name = ""
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         password = request.form.get("password", "")
@@ -739,9 +753,32 @@ def login():
                 return redirect(home_for_role(user["role"]))
             else:
                 record_login_fail(key)
-                error = "Invalid name or password. Please try again."
+                if not candidates:
+                    error = {
+                        "title": f"No account found for '{name}'",
+                        "message": f"There is no registered account under the name '{name}'. If you are a new user, please create your account first.",
+                        "action_url": url_for("signup", name=name),
+                        "action_text": f"Create Account as '{name}' &rarr;"
+                    }
+                else:
+                    role_hint = candidates[0]["role"]
+                    has_legacy = any(not (u["password"] or "").startswith(("scrypt:", "pbkdf2:")) for u in candidates)
+                    if has_legacy:
+                        error = {
+                            "title": f"Password Upgrade Required for '{name}'",
+                            "message": f"Account '{name}' has a temporary legacy password. If you remember your temporary password, enter it to upgrade. Otherwise, click below to set your new strong password immediately with your Unit.",
+                            "action_url": url_for("forgot_password", name=name, role=role_hint),
+                            "action_text": f"Set New Strong Password for '{name}' &rarr;"
+                        }
+                    else:
+                        error = {
+                            "title": f"Incorrect password for '{name}'",
+                            "message": f"The password you entered does not match our records for '{name}'. You can reset it instantly using your registered Unit.",
+                            "action_url": url_for("forgot_password", name=name, role=role_hint),
+                            "action_text": f"Reset Password for '{name}' &rarr;"
+                        }
 
-    return render_template("login.html", error=error)
+    return render_template("login.html", error=error, entered_name=name)
 
 
 @app.route("/upgrade_password", methods=["GET", "POST"])
@@ -755,8 +792,8 @@ def upgrade_password():
     user_role = session.get("pending_upgrade_user_role", "personnel")
 
     if request.method == "POST":
-        new_password = request.form.get("new_password", "")
-        confirm_password = request.form.get("confirm_password", "")
+        new_password = request.form.get("new_password", "").strip()
+        confirm_password = request.form.get("confirm_password", "").strip()
 
         if not new_password or not confirm_password:
             error = "Please enter and confirm your new password."
@@ -802,8 +839,8 @@ def forgot_password():
         role = request.form.get("role", "personnel").strip()
         name = request.form.get("name", "").strip()
         unit = request.form.get("unit", "").strip()
-        new_password = request.form.get("new_password", "")
-        confirm_password = request.form.get("confirm_password", "")
+        new_password = request.form.get("new_password", "").strip()
+        confirm_password = request.form.get("confirm_password", "").strip()
 
         key = f"reset_{name.lower()}_{request.remote_addr}"
         if login_locked(key):
