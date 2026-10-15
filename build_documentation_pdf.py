@@ -711,11 +711,11 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [Paragraph("<b>Category</b>", table_header), Paragraph("<b>Enhancement / Feature Added</b>", table_header), Paragraph("<b>Impact & Operational Benefit</b>", table_header)],
         [
             Paragraph("<b>Clinical Care</b>", table_cell),
-            Paragraph("<b>Clinical Counseling Notes & Removal of Tags System:</b><br/>"
-                      "Restored dedicated <b>Add Counseling Note</b> clinical module with notes textarea, action taken, and follow-up scheduling. "
-                      "Equipped with mobile/desktop floating action button (<code>+ Add Note</code>) and 1-click <code>Schedule Counseling &rarr;</code> triage button on high-risk alerts. "
+            Paragraph("<b>Clinical Counseling Notes & Streamlined UI:</b><br/>"
+                      "Maintained the dedicated <b>Add Counseling Note</b> card with notes textarea, action taken, and follow-up scheduling. "
+                      "Removed intrusive floating sticky button overlay in favor of a clean, unobstructed dossier layout with high-risk triage shortcuts. "
                       "Permanently decommissioned subjective tags across soldier dossiers and rosters to focus personnel records purely on objective physiological telemetry and clinical observations.", table_cell),
-            Paragraph("Empowers officers to record structured clinical interventions while removing tag clutter from personnel listings.", table_cell)
+            Paragraph("Empowers officers to record structured clinical interventions while providing an unobstructed, clean interface.", table_cell)
         ],
         [
             Paragraph("<b>Login Reliability</b>", table_cell),
