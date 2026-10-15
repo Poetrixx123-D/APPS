@@ -1441,30 +1441,9 @@ def personnel_detail(user_id):
 @role_required("officer")
 def add_note():
     target = to_int(request.form.get("user_id"))
-    note_text = request.form.get("notes", "").strip()[:2000]
-    action_taken = request.form.get("action_taken", "").strip()[:500]
-    follow_up_date = request.form.get("follow_up_date") or None
-    if follow_up_date and not valid_iso_date(follow_up_date):
-        follow_up_date = None
-
-    conn = get_db()
-    if target is None or not claim_or_check(conn, target, session["user_id"]):
-        conn.close()
-        return redirect(url_for("officer_dashboard"))
-    if not note_text:
-        conn.close()
+    if target:
         return redirect(url_for("personnel_detail", user_id=target))
-
-    conn.execute(
-        """INSERT INTO CounselingNotes (user_id, officer_id, date, notes, action_taken, follow_up_date)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (target, session["user_id"], date.today().isoformat(), note_text, action_taken, follow_up_date)
-    )
-    log_activity(conn, session["user_id"], "Added counseling note", target,
-                 f"Follow-up set: {follow_up_date}" if follow_up_date else "")
-    conn.commit()
-    conn.close()
-    return redirect(url_for("personnel_detail", user_id=target, saved=1))
+    return redirect(url_for("officer_dashboard"))
 
 
 @app.route("/add_tag", methods=["POST"])
@@ -1518,16 +1497,8 @@ def remove_tag(tag_id):
 @role_required("officer")
 def release_personnel():
     target = to_int(request.form.get("user_id"))
-    if target is not None:
-        conn = get_db()
-        cur = conn.execute(
-            "UPDATE Users SET assigned_officer_id = NULL WHERE id = ? AND assigned_officer_id = ?",
-            (target, session["user_id"])
-        )
-        if cur.rowcount:  # only log if this officer actually owned the case
-            log_activity(conn, session["user_id"], "Released case", target)
-        conn.commit()
-        conn.close()
+    if target:
+        return redirect(url_for("personnel_detail", user_id=target))
     return redirect(url_for("officer_dashboard"))
 
 

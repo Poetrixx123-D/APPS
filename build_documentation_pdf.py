@@ -291,7 +291,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         "heightened stress levels and delivering personalized coping recommendations.<br/><br/>"
         "The platform establishes a strict, role-governed operational hierarchy among three distinct user categories: "
         "<b>(1) Personnel (Soldiers)</b> who submit daily check-ins and request assistance, "
-        "<b>(2) Welfare Officers</b> who manage assigned soldiers, monitor counseling logs, review clinical notes, and handle triage requests, and "
+        "<b>(2) Welfare Officers</b> who monitor unit-wide personnel rosters, track physiological risk trends, manage risk tags, and resolve welfare requests collaboratively without caseload locking barriers, and "
         "<b>(3) Senior Administrators</b> who monitor force-wide wellness trends, unit-level risk distributions, generate access credentials, "
         "and export audit-ready reports."
     )
@@ -431,12 +431,12 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [
             Paragraph("<code>officer_personnel.html</code>", code_style),
             Paragraph("<code>/officer/personnel</code>", code_style),
-            Paragraph("Single-card roster view of all assigned soldiers. Displays unit badge, last check-in timestamp, stress tag, and profile link.", table_cell)
+            Paragraph("Comprehensive roster view of all unit personnel. Displays unit badge, last check-in status, physiological metrics, risk tags, and profile link.", table_cell)
         ],
         [
             Paragraph("<code>personnel_detail.html</code>", code_style),
             Paragraph("<code>/officer/personnel/&lt;id&gt;</code>", code_style),
-            Paragraph("Deep-dive soldier dossier. Physiological time-series charts, counseling note authoring modal, risk tags manager.", table_cell)
+            Paragraph("Deep-dive soldier dossier. Physiological time-series charts, check-in history, welfare request logs, and risk tags manager.", table_cell)
         ],
         [
             Paragraph("<code>officer_going_quiet.html</code>", code_style),
@@ -451,7 +451,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [
             Paragraph("<code>officer_activity_log.html</code>", code_style),
             Paragraph("<code>/officer/activity_log</code>", code_style),
-            Paragraph("Immutable audit trail displaying officer actions, note additions, tag updates, and status transitions.", table_cell)
+            Paragraph("Immutable audit trail displaying officer actions, tag updates, and request pipeline status transitions.", table_cell)
         ],
         [
             Paragraph("<code>admin_dashboard.html</code>", code_style),
@@ -521,7 +521,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [Paragraph("<code>/submit_survey</code>", code_style), Paragraph("POST", table_cell), Paragraph("Soldier", badge_pill), Paragraph("Validates inputs; invokes Random Forest ML model; writes DailyData record.", table_cell)],
         [Paragraph("<code>/submit_stress_request</code>", code_style), Paragraph("POST", table_cell), Paragraph("Soldier", badge_pill), Paragraph("Dispatches confidential stress relief request to assigned officer.", table_cell)],
         [Paragraph("<code>/officer/requests/&lt;id&gt;/advance</code>", code_style), Paragraph("POST", table_cell), Paragraph("Officer", badge_pill), Paragraph("Transitions request through stage pipeline (New &rarr; Acknowledged &rarr; Resolved).", table_cell)],
-        [Paragraph("<code>/add_note</code>", code_style), Paragraph("POST", table_cell), Paragraph("Officer", badge_pill), Paragraph("Saves confidential clinical counseling note and records audit ActivityLog.", table_cell)],
+        [Paragraph("<code>/remove_tag/&lt;id&gt;</code>", code_style), Paragraph("POST", table_cell), Paragraph("Officer", badge_pill), Paragraph("Removes risk or status classification tag from soldier dossier.", table_cell)],
         [Paragraph("<code>/add_tag</code>", code_style), Paragraph("POST", table_cell), Paragraph("Officer", badge_pill), Paragraph("Attaches risk/status classification tag (e.g. #HighStress) to soldier dossier.", table_cell)],
         [Paragraph("<code>/admin/generate_code</code>", code_style), Paragraph("POST", table_cell), Paragraph("Admin", badge_pill), Paragraph("Generates cryptographically random one-time registration codes for staff.", table_cell)],
         [Paragraph("<code>/admin/export_excel</code>", code_style), Paragraph("GET", table_cell), Paragraph("Admin", badge_pill), Paragraph("Generates styled OpenPyXL workbook containing force-wide health data.", table_cell)],
@@ -610,7 +610,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
 
     db_text = (
         "The application utilizes a normalized relational schema executed on <b>SQLite3</b>. "
-        "The schema isolates sensitive military medical telemetry, officer clinical notes, authentication tokens, and user credentials."
+        "The schema isolates sensitive military medical telemetry, assistance request records, authentication tokens, and user credentials."
     )
     story.append(Paragraph(db_text, body_style))
     story.append(Spacer(1, 6))
@@ -645,7 +645,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         [
             Paragraph("<code>CounselingNotes</code>", code_style),
             Paragraph("<code>id (PK), user_id (FK), officer_id (FK), date, notes, action_taken, follow_up_date</code>", code_style),
-            Paragraph("Privileged clinical case notes maintained by welfare officers, including follow-up dates.", table_cell)
+            Paragraph("Archived table: Historical clinical case notes preserved for longitudinal auditing.", table_cell)
         ],
         [
             Paragraph("<code>ActivityLog</code>", code_style),
@@ -691,7 +691,7 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
         "ARCHITECTURAL INNOVATION: SyncedConnection & Cloud Hydration",
         "1. Automatic Cold-Boot Hydration: On container startup, sync_db_from_blob() checks the private Vercel Blob store ('apps-data'). If a newer master apps.db exists, it is securely downloaded and hydrated into the container.\n"
         "2. Transparent Commit Hook: By subclassing sqlite3.Connection into SyncedConnection and injecting it as the connection factory, every commit() automatically triggers sync_db_to_blob(), pushing instantaneous database snapshots to private blob storage.\n"
-        "3. Zero-Data-Loss Guarantee: Updates to passwords, new users, and counseling notes survive serverless container recycles indefinitely.",
+        "3. Zero-Data-Loss Guarantee: Updates to passwords, new users, and welfare requests survive serverless container recycles indefinitely.",
         "#F0FDF4", "#16A34A"
     ))
     story.append(Spacer(1, 14))
@@ -710,6 +710,14 @@ def create_docs_pdf(output_path="APPS_System_Documentation.pdf"):
 
     features_added_data = [
         [Paragraph("<b>Category</b>", table_header), Paragraph("<b>Enhancement / Feature Added</b>", table_header), Paragraph("<b>Impact & Operational Benefit</b>", table_header)],
+        [
+            Paragraph("<b>Officer Workflow</b>", table_cell),
+            Paragraph("<b>Streamlined Roster & Removal of 'Release' / 'Add Note' Locks:</b><br/>"
+                      "Eliminated legacy caseload ownership restrictions and manual 'Release' buttons. "
+                      "All authorized welfare officers now have universal, collaborative access across the full personnel roster. "
+                      "Removed redundant counseling note forms and floating buttons from soldier dossiers in favor of centralized 5-stage welfare request triage and agile risk tags.", table_cell),
+            Paragraph("Removes workflow bottlenecks, eliminates unassigned soldier barriers, and accelerates timely psychological assistance.", table_cell)
+        ],
         [
             Paragraph("<b>Login Reliability</b>", table_cell),
             Paragraph("<b>Login Diagnostics & Whitespace Resilience:</b><br/>"

@@ -172,7 +172,7 @@
     {% include "_header.html" %}
 
   <h2 class="page-title">Personnel List</h2>
-  <p class="empty-note" style="margin-bottom:22px;">Everyone in your caseload, with their latest check-in.</p>
+  <p class="empty-note" style="margin-bottom:22px;">All personnel and their latest check-in status.</p>
 
   <div class="card">
     <div class="p-head">
@@ -191,11 +191,6 @@
       <select id="tagFilter" onchange="filterTable()">
         <option value="">All Tags</option>
         {% for t in all_tags %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
-      </select>
-      <select id="ownerFilter" onchange="filterTable()">
-        <option value="">All Personnel</option>
-        <option value="mine">My personnel</option>
-        <option value="unassigned">Unassigned</option>
       </select>
       <select id="sortSelect" onchange="sortRows()">
         <option value="default">Sort: Risk (High first)</option>
@@ -218,7 +213,6 @@
          data-unit="{{ unit_txt|lower }}"
          data-risk="{{ p.stress_level }}"
          data-tags="{{ user_tags | join('|') | lower }}"
-         data-owner="{{ 'unassigned' if p.assigned_officer_id is none else 'mine' }}"
          data-date="{{ p.date }}" data-sleep="{{ p.sleep_hours }}" data-duty="{{ p.duty_hours }}">
 
         <div class="p-avatar">{{ p.name[0]|upper }}</div>
@@ -227,7 +221,6 @@
           <div class="p-name">
             <span>{{ p.name }}</span>
             <span class="p-id-badge">#{{ p.id }}</span>
-            {% if p.assigned_officer_id is none %}<span class="p-chip warn">Unassigned</span>{% endif %}
             {% for t in user_tags[:2] %}<span class="p-chip">{{ t }}</span>{% endfor %}
             {% if user_tags|length > 2 %}<span class="p-chip">+{{ user_tags|length - 2 }}</span>{% endif %}
           </div>
@@ -282,15 +275,13 @@
     const q = document.getElementById('searchBox').value.trim().toLowerCase();
     const risk = document.getElementById('riskFilter').value;
     const tag = document.getElementById('tagFilter').value.toLowerCase();
-    const owner = document.getElementById('ownerFilter').value;
     let visibleCount = 0;
     document.querySelectorAll('.personnel-row').forEach(row => {
       const hay = (row.dataset.name || '') + ' ' + (row.dataset.unit || '');
       const rowTags = (row.dataset.tags || '').split('|');
       const match = (!q || hay.includes(q))
         && (!risk || row.dataset.risk === risk)
-        && (!tag || rowTags.includes(tag))
-        && (!owner || row.dataset.owner === owner);
+        && (!tag || rowTags.includes(tag));
       row.style.display = match ? '' : 'none';
       if (match) visibleCount++;
     });
@@ -301,7 +292,10 @@
   }
 
   function resetFilters() {
-    ['searchBox', 'riskFilter', 'tagFilter', 'ownerFilter'].forEach(id => document.getElementById(id).value = '');
+    ['searchBox', 'riskFilter', 'tagFilter'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
     document.getElementById('sortSelect').value = 'default';
     sortRows();
     filterTable();

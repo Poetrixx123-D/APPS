@@ -36,21 +36,7 @@
   </div>
   <p class="empty-note" style="margin-bottom:20px;">Unit: {{ person.unit }}</p>
 
-    <div class="card" style="margin-bottom:22px; border-left:3px solid {{ 'var(--signal-med)' if person.assigned_officer_id is none else 'var(--signal-low)' }}; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-    {% if person.assigned_officer_id is none %}
-      <p style="margin:0; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep);">
-        Unassigned. Adding a note, tag, or advancing their request will assign this person to you.
-      </p>
-    {% else %}
-      <p style="margin:0; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep);">
-        In your caseload.
-      </p>
-        <form method="POST" action="/release_personnel" style="margin:0;">
-        <input type="hidden" name="user_id" value="{{ person.id }}">
-        <button type="submit" class="btn">Release</button>
-      </form>
-    {% endif %}
-  </div>
+
     
   <div class="card" style="margin-bottom:22px;">
     <h3>Tags</h3>
@@ -78,112 +64,67 @@
   </div>
 
   {% if history and history[0].stress_level == 'High' %}
-  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-high); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <span style="font-size:16px;">⚠</span>
-      <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
-        Latest check-in flagged High Risk — consider prioritizing counseling.
-      </p>
-    </div>
-    <button type="button" onclick="scrollToNotes()" style="flex-shrink:0; background:var(--signal-high); color:#fff; border:none; padding:9px 16px; border-radius:7px; font-family:'Helvetica Neue', Arial, sans-serif; font-weight:600; font-size:12.5px; letter-spacing:0.02em; cursor:pointer; white-space:nowrap; transition: background 0.2s ease;"
-      onmouseover="this.style.background='#7e3232';" onmouseout="this.style.background='var(--signal-high)';">
-      Schedule Counseling &rarr;
-    </button>
+  <div class="card" style="margin-bottom:22px; border-left:3px solid var(--signal-high); display:flex; align-items:center; gap:10px;">
+    <span style="font-size:16px;">⚠</span>
+    <p style="font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; color:var(--steel-deep); margin:0;">
+      Latest check-in flagged High Risk — consider prioritizing welfare support and monitoring.
+    </p>
   </div>
   {% endif %}
 
-  <div class="grid2">
-    <div class="card">
-      <h3>Activity Timeline</h3>
-      {% if trend_labels and trend_labels|length > 1 %}
-      <div style="margin-bottom:18px;">
-        <canvas id="trendChart" style="max-height:160px;"></canvas>
-      </div>
-      {% endif %}
-            <div class="tl-filters">
-        <button type="button" class="tl-chip active" data-filter="all">All</button>
-        <button type="button" class="tl-chip" data-filter="checkin">Check-ins</button>
-        <button type="button" class="tl-chip" data-filter="note">Notes</button>
-        <button type="button" class="tl-chip" data-filter="request">Requests</button>
-      </div>
-
-      <div class="tl-scroll" style="max-height:480px; overflow-y:auto; padding-right:4px;">
-      {% if timeline %}
-        {% set ns = namespace(last_date=None) %}
-        {% for item in timeline %}
-          {% if item.date != ns.last_date %}
-            <p class="history-group-label">{{ item.date }}</p>
-            {% set ns.last_date = item.date %}
-          {% endif %}
-
-          <div class="tl-item tl-{{ item.kind }}"
-               data-group="{{ 'request' if item.kind.startswith('request') else item.kind }}">
-            <div class="tl-dot"></div>
-            <div class="tl-body">
-
-              {% if item.kind == 'checkin' %}
-                <span class="result-badge badge-{{ item.data.stress_level|lower }}">{{ item.data.stress_level }} RISK</span>
-                <p class="tl-title">Daily check-in</p>
-                <p class="tl-meta">Sleep {{ item.data.sleep_hours }} hrs · Duty {{ item.data.duty_hours }} hrs · HR {{ item.data.heart_rate }} · Mood {{ item.data.mood_score }}/5</p>
-
-              {% elif item.kind == 'note' %}
-                <p class="tl-title">Counseling note <span class="tl-by">by {{ item.data.officer_name }}</span></p>
-                <p class="tl-text"><b>Notes:</b> {{ item.data.notes }}</p>
-                <p class="tl-text"><b>Action:</b> {{ item.data.action_taken }}</p>
-
-              {% elif item.kind == 'request_raised' %}
-                <p class="tl-title">Help request raised</p>
-                <p class="tl-text">{{ item.data.message }}</p>
-
-              {% elif item.kind == 'request_resolved' %}
-                <p class="tl-title">Request resolved
-                  {% if item.data.officer_name %}<span class="tl-by">by {{ item.data.officer_name }}</span>{% endif %}
-                  <span class="tl-stage">{{ item.data.stage }}</span></p>
-                <p class="tl-text"><b>Remedy:</b> {{ item.data.remedy }}</p>
-              {% endif %}
-
-            </div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p class="empty-note">No activity yet.</p>
-      {% endif %}
-      </div>
-          
+  <div class="card" style="margin-top:22px;">
+    <h3>Activity Timeline</h3>
+    {% if trend_labels and trend_labels|length > 1 %}
+    <div style="margin-bottom:18px;">
+      <canvas id="trendChart" style="max-height:160px;"></canvas>
+    </div>
+    {% endif %}
+    <div class="tl-filters">
+      <button type="button" class="tl-chip active" data-filter="all">All</button>
+      <button type="button" class="tl-chip" data-filter="checkin">Check-ins</button>
+      <button type="button" class="tl-chip" data-filter="request">Requests</button>
     </div>
 
-    <div class="card" id="counselingCard">
-      <h3>Add Counseling Note</h3>
-      {% if request.args.get('saved') %}
-      <div id="savedBanner" style="background:rgba(76,122,94,0.12); border-left:3px solid var(--signal-low); padding:8px 12px; border-radius:4px; margin-bottom:14px; font-size:12.5px;">
-        ✓ Note saved successfully.
-      </div>
-      {% endif %}
-      <form method="POST" action="/add_note">
-  <input type="hidden" name="user_id" value="{{ person.id }}">
+    <div class="tl-scroll" style="max-height:480px; overflow-y:auto; padding-right:4px;">
+    {% if timeline %}
+      {% set ns = namespace(last_date=None) %}
+      {% for item in timeline %}
+        {% if item.kind != 'note' %}
+        {% if item.date != ns.last_date %}
+          <p class="history-group-label">{{ item.date }}</p>
+          {% set ns.last_date = item.date %}
+        {% endif %}
 
-  <label>Notes</label>
-  <textarea name="notes" id="notesTextarea" required style="width:100%; min-height:70px; padding:10px; border:1px solid var(--line); border-radius:6px; font-family:'Helvetica Neue', Arial, sans-serif; font-size:13px; margin-bottom:16px; resize:vertical;"></textarea>
+        <div class="tl-item tl-{{ item.kind }}"
+             data-group="{{ 'request' if item.kind.startswith('request') else item.kind }}">
+          <div class="tl-dot"></div>
+          <div class="tl-body">
 
-  <label>Action Taken</label>
+            {% if item.kind == 'checkin' %}
+              <span class="result-badge badge-{{ item.data.stress_level|lower }}">{{ item.data.stress_level }} RISK</span>
+              <p class="tl-title">Daily check-in</p>
+              <p class="tl-meta">Sleep {{ item.data.sleep_hours }} hrs · Duty {{ item.data.duty_hours }} hrs · HR {{ item.data.heart_rate }} · Mood {{ item.data.mood_score }}/5</p>
 
-    <input type="text" name="action_taken" placeholder="e.g. Recommended 2-day rest" required>
+            {% elif item.kind == 'request_raised' %}
+              <p class="tl-title">Help request raised</p>
+              <p class="tl-text">{{ item.data.message }}</p>
 
-  <label>Follow-up Date (optional)</label>
-  <input type="date" name="follow_up_date" style="margin-bottom:16px;">
+            {% elif item.kind == 'request_resolved' %}
+              <p class="tl-title">Request resolved
+                {% if item.data.officer_name %}<span class="tl-by">by {{ item.data.officer_name }}</span>{% endif %}
+                <span class="tl-stage">{{ item.data.stage }}</span></p>
+              <p class="tl-text"><b>Remedy:</b> {{ item.data.remedy }}</p>
+            {% endif %}
 
-  <button type="submit" class="btn" id="saveNoteBtn">Save Note</button>
-</form>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <p class="empty-note">No activity yet.</p>
+    {% endif %}
     </div>
   </div>
-
-  
-</div>
-
-<button type="button" id="stickyAddNoteBtn" onclick="scrollToNotes()" title="Add Counseling Note">
-  <span style="font-size:18px; line-height:1;">+</span>
-  <span class="sticky-btn-label">Add Note</span>
-</button>
 
 
 {% if trend_labels and trend_labels|length > 1 %}
@@ -218,45 +159,7 @@
 {% endif %}
 
 <script>
-  const savedBanner = document.getElementById('savedBanner');
-  if (savedBanner) {
-    setTimeout(() => {
-      savedBanner.style.transition = 'opacity 0.4s ease';
-      savedBanner.style.opacity = '0';
-      setTimeout(() => savedBanner.remove(), 400);
-    }, 3000);
-
-    // clean the ?saved=1 from URL so refresh/back won't show it again
-    const url = new URL(window.location);
-    url.searchParams.delete('saved');
-    window.history.replaceState({}, '', url);
-  }
-
-  function scrollToNotes() {
-    const card = document.getElementById('counselingCard');
-    if (card) {
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => {
-        document.getElementById('notesTextarea').focus();
-      }, 400);
-    }
-  }
-
-  // ---- Notes form loading state ----
-  const saveBtn = document.getElementById('saveNoteBtn');
-  if (saveBtn) {
-    const noteForm = saveBtn.closest('form');
-    if (noteForm) {
-      noteForm.addEventListener('submit', function() {
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
-        saveBtn.style.opacity = '0.7';
-        saveBtn.style.cursor = 'not-allowed';
-      });
-    }
-  }
-
-    // ---- Timeline filter chips ----
+  // ---- Timeline filter chips ----
   document.querySelectorAll('.tl-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.tl-chip').forEach(c => c.classList.remove('active'));
