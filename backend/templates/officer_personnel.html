@@ -188,10 +188,6 @@
         <option value="Medium">Medium</option>
         <option value="Low">Low</option>
       </select>
-      <select id="tagFilter" onchange="filterTable()">
-        <option value="">All Tags</option>
-        {% for t in all_tags %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
-      </select>
       <select id="sortSelect" onchange="sortRows()">
         <option value="default">Sort: Risk (High first)</option>
         <option value="name">Name (A-Z)</option>
@@ -206,13 +202,11 @@
     <div class="p-list">
       {% for p in personnel %}
       {% set unit_txt = (p.unit or '')|string|trim %}
-      {% set user_tags = tags_by_user.get(p.id, []) %}
       <a href="/officer/personnel/{{ p.id }}" class="personnel-row p-row r-{{ p.stress_level|lower }}"
          data-idx="{{ loop.index }}"
          data-name="{{ p.name|lower }}"
          data-unit="{{ unit_txt|lower }}"
          data-risk="{{ p.stress_level }}"
-         data-tags="{{ user_tags | join('|') | lower }}"
          data-date="{{ p.date }}" data-sleep="{{ p.sleep_hours }}" data-duty="{{ p.duty_hours }}">
 
         <div class="p-avatar">{{ p.name[0]|upper }}</div>
@@ -221,8 +215,6 @@
           <div class="p-name">
             <span>{{ p.name }}</span>
             <span class="p-id-badge">#{{ p.id }}</span>
-            {% for t in user_tags[:2] %}<span class="p-chip">{{ t }}</span>{% endfor %}
-            {% if user_tags|length > 2 %}<span class="p-chip">+{{ user_tags|length - 2 }}</span>{% endif %}
           </div>
           <div class="p-meta">
             <span class="m-item">🏢 Unit: <strong>{% if unit_txt %}{{ unit_txt }}{% else %}&mdash;{% endif %}</strong></span>
@@ -274,14 +266,11 @@
   function filterTable() {
     const q = document.getElementById('searchBox').value.trim().toLowerCase();
     const risk = document.getElementById('riskFilter').value;
-    const tag = document.getElementById('tagFilter').value.toLowerCase();
     let visibleCount = 0;
     document.querySelectorAll('.personnel-row').forEach(row => {
       const hay = (row.dataset.name || '') + ' ' + (row.dataset.unit || '');
-      const rowTags = (row.dataset.tags || '').split('|');
       const match = (!q || hay.includes(q))
-        && (!risk || row.dataset.risk === risk)
-        && (!tag || rowTags.includes(tag));
+        && (!risk || row.dataset.risk === risk);
       row.style.display = match ? '' : 'none';
       if (match) visibleCount++;
     });
@@ -292,7 +281,7 @@
   }
 
   function resetFilters() {
-    ['searchBox', 'riskFilter', 'tagFilter'].forEach(id => {
+    ['searchBox', 'riskFilter'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });

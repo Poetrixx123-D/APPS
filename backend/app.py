@@ -1441,56 +1441,46 @@ def personnel_detail(user_id):
 @role_required("officer")
 def add_note():
     target = to_int(request.form.get("user_id"))
-    if target:
+    note_text = request.form.get("notes", "").strip()[:2000]
+    action_taken = request.form.get("action_taken", "").strip()[:500]
+    follow_up_date = request.form.get("follow_up_date") or None
+    if follow_up_date and not valid_iso_date(follow_up_date):
+        follow_up_date = None
+
+    conn = get_db()
+    if target is None:
+        conn.close()
+        return redirect(url_for("officer_dashboard"))
+    if not note_text:
+        conn.close()
         return redirect(url_for("personnel_detail", user_id=target))
-    return redirect(url_for("officer_dashboard"))
+
+    conn.execute(
+        """INSERT INTO CounselingNotes (user_id, officer_id, date, notes, action_taken, follow_up_date)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (target, session["user_id"], date.today().isoformat(), note_text, action_taken, follow_up_date)
+    )
+    log_activity(conn, session["user_id"], "Added counseling note", target,
+                 f"Follow-up set: {follow_up_date}" if follow_up_date else "")
+    conn.commit()
+    sync_db_to_blob()
+    conn.close()
+    return redirect(url_for("personnel_detail", user_id=target, saved=1))
 
 
 @app.route("/add_tag", methods=["POST"])
 @role_required("officer")
 def add_tag():
     target = to_int(request.form.get("user_id"))
-    tag = request.form.get("tag", "").strip()[:30]
-    if target is None:
-        return redirect(url_for("officer_dashboard"))
-
-    if tag:
-        conn = get_db()
-        try:
-            if not claim_or_check(conn, target, session["user_id"]):
-                return redirect(url_for("officer_dashboard"))
-            try:
-                conn.execute(
-                    "INSERT INTO PersonnelTags (user_id, tag, officer_id, created_date) VALUES (?, ?, ?, ?)",
-                    (target, tag, session["user_id"], date.today().isoformat())
-                )
-                log_activity(conn, session["user_id"], f"Added tag '{tag}'", target)
-                conn.commit()
-            except sqlite3.IntegrityError:
-                pass  # tag already on this person
-        finally:
-            conn.close()
-    return redirect(url_for("personnel_detail", user_id=target))
+    if target:
+        return redirect(url_for("personnel_detail", user_id=target))
+    return redirect(url_for("officer_dashboard"))
 
 
 @app.route("/remove_tag/<int:tag_id>", methods=["POST"])
 @role_required("officer")
 def remove_tag(tag_id):
-    conn = get_db()
-    row = conn.execute("SELECT user_id, tag FROM PersonnelTags WHERE id = ?", (tag_id,)).fetchone()
-    if not row:
-        conn.close()
-        return redirect(url_for("officer_dashboard"))
-
-    if not claim_or_check(conn, row["user_id"], session["user_id"]):
-        conn.close()
-        return redirect(url_for("officer_dashboard"))
-
-    conn.execute("DELETE FROM PersonnelTags WHERE id = ?", (tag_id,))
-    log_activity(conn, session["user_id"], f"Removed tag '{row['tag']}'", row["user_id"])
-    conn.commit()
-    conn.close()
-    return redirect(url_for("personnel_detail", user_id=row["user_id"]))
+    return redirect(url_for("officer_dashboard"))
 
 
 @app.route("/release_personnel", methods=["POST"])
